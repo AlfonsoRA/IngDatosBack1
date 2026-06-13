@@ -121,12 +121,13 @@ Query: `refugioId`, `especie`, `estadoDisponibilidad` (`DISPONIBLE`, `EN_PROCESO
 
 ## Conexión SQL Server
 
+Copiá `src/main/resources/application-local.properties.example` a `application-local.properties` y definí la contraseña del login `patitas_app`:
+
 ```properties
-spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=Patitas Unidas;...
-spring.datasource.username=patitas_app
 spring.datasource.password=TU-CONTRASEÑA
-spring.jpa.hibernate.ddl-auto=validate
 ```
+
+En `application.properties` quedan URL, usuario y JPA (`spring.jpa.hibernate.ddl-auto=validate`).
 
 Primera vez en la PC: `scripts\fix-sqlserver-tcp-admin.cmd` (TCP 1433 + auth mixta).
 

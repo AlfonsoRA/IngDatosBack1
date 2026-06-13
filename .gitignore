@@ -3,3 +3,6 @@
 .vscode/
 target/
 *.iml
+
+# Credenciales locales (no subir al repositorio)
+src/main/resources/application-local.properties
