@@ -205,7 +205,7 @@ GO
 
 SET IDENTITY_INSERT dbo.refugio ON;
 INSERT INTO dbo.refugio (id_refugio, id_direccion, nombre, email, telefono, capacidad, responsable) VALUES
-(1, 1, N'Patitas Norte',  N' norte@patitasunidas.org',  N'11-4444-0001', 80, N'María González'),
+(1, 1, N'Patitas Norte',  N'norte@patitasunidas.org',  N'11-4444-0001', 80, N'María González'),
 (2, 2, N'Patitas Sur',    N'sur@patitasunidas.org',     N'11-4444-0002', 60, N'Juan Pérez'),
 (3, 3, N'Patitas Oeste',  N'oeste@patitasunidas.org',   N'11-4444-0003', 70, N'Ana Rodríguez'),
 (4, 4, N'Patitas Centro', N'centro@patitasunidas.org', N'11-4444-0004', 50, N'Carlos Méndez');

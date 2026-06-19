@@ -84,7 +84,8 @@ public class RefugioService {
 
     private void aplicarDatos(Refugio refugio, RefugioRequest request) {
         refugio.setNombre(request.getNombre());
-        refugio.setEmail(request.getEmail());
+        String email = request.getEmail();
+        refugio.setEmail(email != null && !email.isBlank() ? email.strip() : null);
         refugio.setTelefono(request.getTelefono());
         refugio.setCapacidad(request.getCapacidad());
         refugio.setResponsable(request.getResponsable());

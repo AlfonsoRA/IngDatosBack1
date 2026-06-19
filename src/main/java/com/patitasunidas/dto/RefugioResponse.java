@@ -18,7 +18,7 @@ public class RefugioResponse {
         RefugioResponse res = new RefugioResponse();
         res.setId(r.getId());
         res.setNombre(r.getNombre());
-        res.setEmail(r.getEmail());
+        res.setEmail(r.getEmail() != null ? r.getEmail().strip() : null);
         res.setTelefono(r.getTelefono());
         res.setCapacidad(r.getCapacidad());
         res.setCapacidadMaxima(r.getCapacidad());
