@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -45,7 +46,7 @@ public class AnimalService {
             animales = animalRepository.findAll();
         }
         return animales.stream()
-                .map(a -> AnimalResponse.from(a, adopcionRepository))
+                .map(this::toResponse)
                 .filter(r -> estadoDisponibilidad == null
                         || estadoDisponibilidad.isBlank()
                         || estadoDisponibilidad.equalsIgnoreCase(r.getEstadoDisponibilidad()))
@@ -54,27 +55,31 @@ public class AnimalService {
 
     @Transactional(readOnly = true)
     public AnimalResponse obtener(Long id) {
-        return AnimalResponse.from(buscarAnimal(id), adopcionRepository);
+        return toResponse(buscarAnimal(id));
     }
 
     public AnimalResponse crear(AnimalRequest request) {
         Refugio refugio = refugioService.buscar(request.getRefugioId());
         validarCapacidad(refugio);
         Animal animal = new Animal();
-        aplicarDatos(animal, request, refugio);
+        aplicarDatos(animal, request);
         animal = animalRepository.save(animal);
         registrarUbicacionInicial(animal, refugio);
-        return AnimalResponse.from(animal, adopcionRepository);
+        return toResponse(animal);
     }
 
     public AnimalResponse actualizar(Long id, AnimalRequest request) {
         Animal animal = buscarAnimal(id);
-        Refugio refugio = refugioService.buscar(request.getRefugioId());
-        if (!refugio.getId().equals(animal.getRefugio().getId())) {
-            validarCapacidad(refugio);
-        }
-        aplicarDatos(animal, request, refugio);
-        return AnimalResponse.from(animalRepository.save(animal), adopcionRepository);
+        Refugio refugioNuevo = refugioService.buscar(request.getRefugioId());
+        ubicacionAnimalRepository.findFirstByAnimalIdAndEsActualTrue(animal.getId()).ifPresent(ua -> {
+            if (!ua.getRefugio().getId().equals(refugioNuevo.getId())) {
+                validarCapacidad(refugioNuevo);
+                cerrarUbicacionActual(ua);
+                registrarUbicacion(animal, refugioNuevo, request.getFechaIngreso(), "Traslado entre refugios");
+            }
+        });
+        aplicarDatos(animal, request);
+        return toResponse(animalRepository.save(animal));
     }
 
     public void eliminar(Long id) {
@@ -93,6 +98,10 @@ public class AnimalService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Animal no encontrado"));
     }
 
+    private AnimalResponse toResponse(Animal animal) {
+        return AnimalResponse.from(animal, adopcionRepository, ubicacionAnimalRepository);
+    }
+
     private void validarCapacidad(Refugio refugio) {
         long ocupacion = animalRepository.countByRefugioId(refugio.getId());
         if (ocupacion >= refugio.getCapacidad()) {
@@ -102,22 +111,38 @@ public class AnimalService {
     }
 
     private void registrarUbicacionInicial(Animal animal, Refugio refugio) {
+        registrarUbicacion(animal, refugio, animal.getFechaIngreso(), "Ingreso inicial");
+    }
+
+    private void registrarUbicacion(Animal animal, Refugio refugio, LocalDate fecha, String motivo) {
         UbicacionAnimal ua = new UbicacionAnimal();
         ua.setAnimal(animal);
         ua.setRefugio(refugio);
-        ua.setFechaIngreso(animal.getFechaIngreso());
-        ua.setMotivoTraslado("Ingreso inicial");
+        ua.setFechaIngreso(fecha != null ? fecha : LocalDate.now());
+        ua.setMotivoTraslado(motivo);
         ua.setEsActual(true);
+        ubicacionAnimalRepository.save(ua);
+        if (!"Adoptado".equals(animal.getEstado())) {
+            animal.setEstado("En refugio");
+        }
+    }
+
+    private void cerrarUbicacionActual(UbicacionAnimal ua) {
+        ua.setEsActual(false);
+        ua.setFechaSalida(LocalDate.now());
         ubicacionAnimalRepository.save(ua);
     }
 
-    private void aplicarDatos(Animal animal, AnimalRequest request, Refugio refugio) {
+    private void aplicarDatos(Animal animal, AnimalRequest request) {
         animal.setNombre(request.getNombre());
         animal.setEspecie(request.getEspecie());
         animal.setRaza(request.getRaza());
-        animal.setEdad(request.getEdad());
+        animal.setFechaNacimientoEstimada(request.getFechaNacimientoEstimada());
+        animal.setSexo(request.getSexo());
         animal.setFechaIngreso(request.getFechaIngreso());
-        animal.setEsCastrado(request.getEsCastrado() != null ? request.getEsCastrado() : false);
-        animal.setRefugio(refugio);
+        animal.setCastrado(request.getEsCastrado() != null ? request.getEsCastrado() : false);
+        if (animal.getEstado() == null) {
+            animal.setEstado("En refugio");
+        }
     }
 }

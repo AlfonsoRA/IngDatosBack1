@@ -24,7 +24,6 @@ public class RefugioResponse {
         res.setCapacidadMaxima(r.getCapacidad());
         res.setResponsable(r.getResponsable());
         if (r.getDireccion() != null) {
-            res.setDireccion(DireccionMapper.toDto(r.getDireccion()));
             res.setDomicilio(r.getDireccion().formatoCompleto());
         }
         return res;

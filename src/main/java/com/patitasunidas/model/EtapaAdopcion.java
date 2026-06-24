@@ -9,6 +9,7 @@ public class EtapaAdopcion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SqlIntIdentity
     @Column(name = "id_etapa_adopcion")
     private Long id;
 
@@ -26,7 +27,7 @@ public class EtapaAdopcion {
     @Column(name = "fecha_fin")
     private LocalDate fechaFin;
 
-    @Column(length = 500)
+    @Column(length = 200)
     private String observaciones;
 
     public Long getId() { return id; }

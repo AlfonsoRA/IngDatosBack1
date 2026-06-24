@@ -9,6 +9,7 @@ public class HistorialMedico {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SqlIntIdentity
     @Column(name = "id_historial_medico")
     private Long id;
 
@@ -16,19 +17,19 @@ public class HistorialMedico {
     @JoinColumn(name = "id_animal", nullable = false)
     private Animal animal;
 
-    @Column(name = "nombre_veterinaria", length = 120)
+    @Column(name = "nombre_veterinaria", length = 100)
     private String nombreVeterinaria;
 
-    @Column(length = 500)
+    @Column(length = 200)
     private String observacion;
 
-    @Column(length = 200)
+    @Column(length = 150)
     private String medicamento;
 
-    @Column(length = 300)
+    @Column(length = 150)
     private String diagnostico;
 
-    @Column(name = "tipo_intervencion", length = 100)
+    @Column(name = "tipo_intervencion", nullable = false, length = 100)
     private String tipoIntervencion;
 
     @Column(nullable = false)

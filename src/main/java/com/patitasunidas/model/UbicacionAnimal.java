@@ -9,6 +9,7 @@ public class UbicacionAnimal {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SqlIntIdentity
     @Column(name = "id_ubicacion_animal")
     private Long id;
 
@@ -23,7 +24,7 @@ public class UbicacionAnimal {
     @Column(name = "fecha_ingreso", nullable = false)
     private LocalDate fechaIngreso;
 
-    @Column(name = "motivo_traslado", length = 200)
+    @Column(name = "motivo_traslado", length = 150)
     private String motivoTraslado;
 
     @Column(name = "fecha_salida")

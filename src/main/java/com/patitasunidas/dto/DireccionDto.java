@@ -4,12 +4,14 @@ import jakarta.validation.constraints.NotBlank;
 
 public class DireccionDto {
     private Long id;
+    /** API/front: equivale a nombre en BD */
     @NotBlank
     private String calle;
     private String numero;
     @NotBlank
     private String localidad;
     private String partido;
+    private String provincia = "BUENOS AIRES";
     private String cp;
 
     public Long getId() { return id; }
@@ -22,6 +24,8 @@ public class DireccionDto {
     public void setLocalidad(String localidad) { this.localidad = localidad; }
     public String getPartido() { return partido; }
     public void setPartido(String partido) { this.partido = partido; }
+    public String getProvincia() { return provincia; }
+    public void setProvincia(String provincia) { this.provincia = provincia; }
     public String getCp() { return cp; }
     public void setCp(String cp) { this.cp = cp; }
 }

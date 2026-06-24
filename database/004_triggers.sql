@@ -1,10 +1,10 @@
--- Triggers - PatitasUnidas
+-- Triggers - PatitasUnidas (schema equipo)
 USE [Patitas Unidas];
 GO
 
--- Alerta de sobrecupo al insertar animal en refugio
+-- Alerta de sobrecupo según ubicaciones actuales (no adoptados)
 CREATE OR ALTER TRIGGER dbo.trg_refugio_sobrecupo
-ON dbo.animal
+ON dbo.ubicacion_animal
 AFTER INSERT, UPDATE
 AS
 BEGIN
@@ -13,9 +13,11 @@ BEGIN
         SELECT 1
         FROM dbo.refugio r
         INNER JOIN (
-            SELECT id_refugio, COUNT(*) AS ocupacion
-            FROM dbo.animal
-            GROUP BY id_refugio
+            SELECT ua.id_refugio, COUNT(*) AS ocupacion
+            FROM dbo.ubicacion_animal ua
+            INNER JOIN dbo.animal a ON ua.id_animal = a.id_animal
+            WHERE ua.es_actual = 1 AND (a.estado IS NULL OR a.estado <> N'Adoptado')
+            GROUP BY ua.id_refugio
         ) o ON r.id_refugio = o.id_refugio
         WHERE o.ocupacion > r.capacidad
     )
@@ -27,43 +29,44 @@ BEGIN
 END;
 GO
 
--- Al completar adopcion, registrar etapa final automatica (trazabilidad)
-CREATE OR ALTER TRIGGER dbo.trg_adopcion_completada
+-- Al concretar adopción, registrar etapa final automática
+CREATE OR ALTER TRIGGER dbo.trg_adopcion_concretada
 ON dbo.adopcion
 AFTER UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
     INSERT INTO dbo.etapa_adopcion (id_adopcion, id_refugio, fecha_inicio, fecha_fin, observaciones)
-    SELECT i.id_adopcion, a.id_refugio, CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE),
-           N'Adopcion completada - cierre automatico'
+    SELECT i.id_adopcion, ua.id_refugio, CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE),
+           N'Adopción concretada - cierre automático'
     FROM inserted i
     INNER JOIN deleted d ON i.id_adopcion = d.id_adopcion
-    INNER JOIN dbo.animal a ON i.id_animal = a.id_animal
-    WHERE i.estado_actual = N'COMPLETADA' AND d.estado_actual <> N'COMPLETADA';
+    INNER JOIN dbo.ubicacion_animal ua ON ua.id_animal = i.id_animal AND ua.es_actual = 1
+    WHERE i.estado_actual = N'Concretada' AND ISNULL(d.estado_actual, N'') <> N'Concretada';
+
+    UPDATE a SET estado = N'Adoptado'
+    FROM dbo.animal a
+    INNER JOIN inserted i ON a.id_animal = i.id_animal
+    INNER JOIN deleted d ON i.id_adopcion = d.id_adopcion
+    WHERE i.estado_actual = N'Concretada' AND ISNULL(d.estado_actual, N'') <> N'Concretada';
 END;
 GO
 
--- Log de traslados: al cambiar refugio del animal, cerrar ubicacion anterior
-CREATE OR ALTER TRIGGER dbo.trg_animal_traslado
-ON dbo.animal
-AFTER UPDATE
+-- Al marcar tránsito activo, actualizar estado del animal
+CREATE OR ALTER TRIGGER dbo.trg_transito_activo
+ON dbo.transito
+AFTER INSERT, UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
-    IF UPDATE(id_refugio)
-    BEGIN
-        UPDATE ua SET es_actual = 0, fecha_salida = CAST(GETDATE() AS DATE)
-        FROM dbo.ubicacion_animal ua
-        INNER JOIN inserted i ON ua.id_animal = i.id_animal
-        INNER JOIN deleted d ON i.id_animal = d.id_animal
-        WHERE ua.es_actual = 1 AND i.id_refugio <> d.id_refugio;
+    UPDATE a SET estado = N'En tránsito'
+    FROM dbo.animal a
+    INNER JOIN inserted i ON a.id_animal = i.id_animal
+    WHERE i.estado_actual = N'En tránsito';
 
-        INSERT INTO dbo.ubicacion_animal (id_animal, id_refugio, fecha_ingreso, motivo_traslado, es_actual)
-        SELECT i.id_animal, i.id_refugio, CAST(GETDATE() AS DATE), N'Traslado entre refugios', 1
-        FROM inserted i
-        INNER JOIN deleted d ON i.id_animal = d.id_animal
-        WHERE i.id_refugio <> d.id_refugio;
-    END
+    UPDATE a SET estado = N'En refugio'
+    FROM dbo.animal a
+    INNER JOIN inserted i ON a.id_animal = i.id_animal
+    WHERE i.estado_actual IN (N'Finalizado', N'Cancelado');
 END;
 GO

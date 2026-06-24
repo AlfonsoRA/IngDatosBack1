@@ -8,26 +8,27 @@ public class Adoptante {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SqlIntIdentity
     @Column(name = "id_adoptante")
     private Long id;
 
-    @OneToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "id_direccion", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "id_direccion", nullable = false)
     private Direccion direccion;
 
     @Column(nullable = false, length = 20, unique = true)
     private String dni;
 
-    @Column(nullable = false, length = 80)
+    @Column(nullable = false, length = 100)
     private String nombre;
 
-    @Column(nullable = false, length = 80)
+    @Column(nullable = false, length = 100)
     private String apellido;
 
-    @Column(length = 120)
+    @Column(length = 100)
     private String email;
 
-    @Column(length = 30)
+    @Column(nullable = false, length = 50)
     private String telefono;
 
     @Column(name = "adoptante_previo", nullable = false)

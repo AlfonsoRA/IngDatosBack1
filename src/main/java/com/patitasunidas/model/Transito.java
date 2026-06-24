@@ -9,6 +9,7 @@ public class Transito {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SqlIntIdentity
     @Column(name = "id_transito")
     private Long id;
 
@@ -33,10 +34,10 @@ public class Transito {
     @Column(name = "fecha_fin_real")
     private LocalDate fechaFinReal;
 
-    @Column(name = "estado_actual", nullable = false, length = 50)
+    @Column(name = "estado_actual", length = 100)
     private String estadoActual;
 
-    @Column(length = 500)
+    @Column(length = 200)
     private String observaciones;
 
     public Long getId() { return id; }

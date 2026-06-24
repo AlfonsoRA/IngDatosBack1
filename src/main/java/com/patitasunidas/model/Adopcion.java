@@ -9,11 +9,12 @@ public class Adopcion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SqlIntIdentity
     @Column(name = "id_adopcion")
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_animal", nullable = false, unique = true)
+    @JoinColumn(name = "id_animal", nullable = false)
     private Animal animal;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -23,7 +24,7 @@ public class Adopcion {
     @Column(name = "fecha_solicitud", nullable = false)
     private LocalDate fechaSolicitud;
 
-    @Column(name = "estado_actual", nullable = false, length = 50)
+    @Column(name = "estado_actual", length = 100)
     private String estadoActual;
 
     public Long getId() { return id; }
