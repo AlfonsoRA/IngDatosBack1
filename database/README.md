@@ -9,6 +9,6 @@ Ejecutar **en este orden** en SSMS o con `scripts/run-database-scripts.ps1`.
 | `003_stored_procedures.sql` | Stored procedures CRUD |
 | `004_triggers.sql` | Sobrecupo, traslado animal, adopción completada |
 | `005_views.sql` | Vistas para reportes |
-| `006_consultas.sql` | Consultas analíticas de ejemplo |
+| `006_consultas.sql` | Consultas analíticas de ejemplo (opcional, solo pruebas en SSMS) |
 
 > **Nota:** `001_schema.sql` es el schema anterior (solo refugio + animal simplificado). Usar **`001_schema_der.sql`**.

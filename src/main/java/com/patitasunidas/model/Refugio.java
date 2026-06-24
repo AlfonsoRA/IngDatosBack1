@@ -7,7 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -16,26 +16,27 @@ public class Refugio {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SqlIntIdentity
     @Column(name = "id_refugio")
     private Long id;
 
-    @OneToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "id_direccion", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "id_direccion", nullable = false)
     private Direccion direccion;
 
-    @Column(nullable = false, length = 120)
+    @Column(nullable = false, length = 100)
     private String nombre;
 
-    @Column(length = 120)
+    @Column(length = 100)
     private String email;
 
-    @Column(length = 30)
+    @Column(length = 50)
     private String telefono;
 
     @Column(nullable = false)
     private Integer capacidad;
 
-    @Column(nullable = false, length = 100)
+    @Column(length = 100)
     private String responsable;
 
     public Long getId() { return id; }

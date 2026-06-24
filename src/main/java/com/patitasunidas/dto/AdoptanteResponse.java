@@ -21,7 +21,6 @@ public class AdoptanteResponse {
         r.setEmail(a.getEmail());
         r.setTelefono(a.getTelefono());
         r.setAdoptantePrevio(a.getAdoptantePrevio());
-        r.setDireccion(DireccionMapper.toDto(a.getDireccion()));
         return r;
     }
 

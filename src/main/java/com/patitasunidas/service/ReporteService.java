@@ -28,4 +28,16 @@ public class ReporteService {
     public List<Map<String, Object>> adopcionesDetalle() {
         return jdbc.queryForList("SELECT * FROM dbo.vw_adopciones_detalle ORDER BY fecha_solicitud DESC");
     }
+
+    public List<Map<String, Object>> transitosActivos() {
+        return jdbc.queryForList("EXEC dbo.sp_consulta_transitos_activos");
+    }
+
+    public List<Map<String, Object>> adopcionesPorMes() {
+        return jdbc.queryForList("EXEC dbo.sp_consulta_adopciones_por_mes");
+    }
+
+    public List<Map<String, Object>> trasladosRefugios() {
+        return jdbc.queryForList("EXEC dbo.sp_consulta_traslados_refugios");
+    }
 }

@@ -12,6 +12,8 @@ public class AnimalRequest {
     private String especie;
     private String raza;
     private Integer edad;
+    private LocalDate fechaNacimientoEstimada;
+    private String sexo;
     @NotNull
     private LocalDate fechaIngreso;
     private Boolean esCastrado;
@@ -26,6 +28,16 @@ public class AnimalRequest {
     public void setRaza(String raza) { this.raza = raza; }
     public Integer getEdad() { return edad; }
     public void setEdad(Integer edad) { this.edad = edad; }
+    public LocalDate getFechaNacimientoEstimada() {
+        if (fechaNacimientoEstimada != null) return fechaNacimientoEstimada;
+        if (edad != null && fechaIngreso != null) {
+            return fechaIngreso.minusYears(edad);
+        }
+        return null;
+    }
+    public void setFechaNacimientoEstimada(LocalDate fechaNacimientoEstimada) { this.fechaNacimientoEstimada = fechaNacimientoEstimada; }
+    public String getSexo() { return sexo; }
+    public void setSexo(String sexo) { this.sexo = sexo; }
     public LocalDate getFechaIngreso() { return fechaIngreso; }
     public void setFechaIngreso(LocalDate fechaIngreso) { this.fechaIngreso = fechaIngreso; }
     public Boolean getEsCastrado() { return esCastrado; }

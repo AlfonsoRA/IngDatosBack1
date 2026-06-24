@@ -218,4 +218,13 @@ class ReporteController {
 
     @GetMapping("/adopciones-detalle")
     public List<Map<String, Object>> adopcionesDetalle() { return service.adopcionesDetalle(); }
+
+    @GetMapping("/transitos-activos")
+    public List<Map<String, Object>> transitosActivos() { return service.transitosActivos(); }
+
+    @GetMapping("/adopciones-por-mes")
+    public List<Map<String, Object>> adopcionesPorMes() { return service.adopcionesPorMes(); }
+
+    @GetMapping("/traslados-refugios")
+    public List<Map<String, Object>> trasladosRefugios() { return service.trasladosRefugios(); }
 }

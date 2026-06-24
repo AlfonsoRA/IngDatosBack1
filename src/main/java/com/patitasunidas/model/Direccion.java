@@ -13,43 +13,43 @@ public class Direccion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SqlIntIdentity
     @Column(name = "id_direccion")
     private Long id;
 
     @Column(nullable = false, length = 120)
-    private String calle;
+    private String nombre;
 
-    @Column(length = 20)
-    private String numero;
+    @Column(nullable = false)
+    private Integer altura;
 
-    @Column(nullable = false, length = 100)
+    @Column(length = 80)
     private String localidad;
 
-    @Column(length = 100)
+    @Column(length = 80)
     private String partido;
 
-    @Column(length = 10)
-    private String cp;
+    @Column(nullable = false, length = 50)
+    private String provincia = "BUENOS AIRES";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public String getCalle() { return calle; }
-    public void setCalle(String calle) { this.calle = calle; }
-    public String getNumero() { return numero; }
-    public void setNumero(String numero) { this.numero = numero; }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+    public Integer getAltura() { return altura; }
+    public void setAltura(Integer altura) { this.altura = altura; }
     public String getLocalidad() { return localidad; }
     public void setLocalidad(String localidad) { this.localidad = localidad; }
     public String getPartido() { return partido; }
     public void setPartido(String partido) { this.partido = partido; }
-    public String getCp() { return cp; }
-    public void setCp(String cp) { this.cp = cp; }
+    public String getProvincia() { return provincia; }
+    public void setProvincia(String provincia) { this.provincia = provincia; }
 
     public String formatoCompleto() {
-        StringBuilder sb = new StringBuilder(calle);
-        if (numero != null && !numero.isBlank()) sb.append(" ").append(numero);
-        sb.append(", ").append(localidad);
+        StringBuilder sb = new StringBuilder(nombre);
+        if (altura != null && altura > 0) sb.append(" ").append(altura);
+        if (localidad != null && !localidad.isBlank()) sb.append(", ").append(localidad);
         if (partido != null && !partido.isBlank()) sb.append(" (").append(partido).append(")");
-        if (cp != null && !cp.isBlank()) sb.append(" CP ").append(cp);
         return sb.toString();
     }
 }

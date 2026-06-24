@@ -22,10 +22,9 @@ public class HogarTransitoResponse {
         r.setApellido(h.getApellido());
         r.setEmail(h.getEmail());
         r.setTelefono(h.getTelefono());
-        r.setCapacidadMaxima(h.getCapacidadMaxima());
-        r.setTieneGatos(h.getTieneGatos());
-        r.setTienePerros(h.getTienePerros());
-        r.setDireccion(DireccionMapper.toDto(h.getDireccion()));
+        r.setCapacidadMaxima(h.getCapacidadAceptada());
+        r.setTieneGatos(h.getAceptaGatos());
+        r.setTienePerros(h.getAceptaPerros());
         return r;
     }
 
