@@ -1,0 +1,524 @@
+29: [normal] TURNO: NOCHE
+30: [normal] GRUPO 06: Patitas Unidas
+32: [normal] Integrantes del Grupo:
+33: [normal] ​L 1162601 – Areiza Ricardo
+34: [normal] L 1150546 –  Diaz Sabignoso Valentino
+35: [normal] L 1223773 –  Duarte Ruth
+36: [normal] L 1177768 –  Lazarte Lagos Joanna
+37: [normal] L 1177637 –  Piñeiro Carolina Julieta
+38: [normal] L 1165015 – Pulido Agustín
+40: [normal] Profesor:
+41: [normal] Ing. Franco Emanuel Salazar
+42: [normal] Fecha de Entrega:26/06/2026
+46: [normal] Índice
+49: [normal] Nota extra: Recuerde que este documento es a modo de ejemplo la letra se recomienda que sea legible del tamaño 11-12, que sea justificado y ordenado.
+51: [Heading 1] Resumen Ejecutivo
+53: [normal] Este proyecto tiene como objetivo diseñar e implementar una base de datos relacional en MS SQL Server para PatitasUnidas, una red de refugios de animales del AMBA que actualmente opera sin ningún sistema de gestión digital. La solución centraliza el registro de animales, el seguimiento de su historial médico básico, la administración de hogares de tránsito y la gestión integral del proceso de adopción en sus distintas etapas. Se espera reducir la pérdida de información al trasladar animales entre refugios, eliminar la duplicación de registros, habilitar reportes de impacto para donantes y mejorar el seguimiento del proceso adoptivo mediante stored procedures de CRUD, triggers de actualización automática de estado y alertas de sobrecupo, vistas de animales disponibles y consultas SQL analíticas con JOINs, subconsultas y agregados.
+55: [Heading 1] Introducción
+57: [normal] En Argentina existen estimaciones de entre 5 y 20 millones de perros y gatos en situación de calle (Infobae, 2024), lo que da contexto a la magnitud del trabajo que realizan las organizaciones proteccionistas. PatitasUnidas, la ONG sobre la que se basa este trabajo, coordina una red de refugios en el AMBA pero gestiona toda su operación de forma manual, las fichas de los animales se completan en papel, los turnos de voluntarios se coordinan por WhatsApp y el proceso de adopción no cuenta con ningún seguimiento formal. Esta falta de digitalización genera pérdida de historiales médicos al trasladar animales entre sedes, registros duplicados, imposibilidad de medir el impacto de la organización ante donantes y un alto abandono del proceso de adopción por falta de seguimiento. El alcance del proyecto se acota al proceso de adopciones, la estadía en hogares de tránsito y el historial médico general del animal, dejando fuera de alcance otros procesos como donaciones o gestión de voluntariado.
+58: [Heading 1] Objetivos del Sistema
+59: [normal] Objetivo general:
+60: [normal] Diseñar e implementar una base de datos relacional normalizada que centralice la operación de la red de refugios de PatitasUnidas, cubriendo el registro de animales, su historial médico, los hogares de tránsito y el proceso de adopción.
+62: [normal] Objetivos específicos:
+63: [normal] Modelar y normalizar (3FN) las entidades principales del dominio, entre ellas REFUGIO, ANIMAL, UBICACION_ANIMAL, TRANSITO, HOGAR_TRANSITO, HISTORIAL_MEDICO, ADOPCION, ETAPA_ADOPCION y ADOPTANTE, incorporando además DIRECCION y CODIGO_POSTAL para normalizar correctamente los datos de domicilio.
+64: [normal] Registrar cada animal con su estado (En refugio, En tránsito, Adoptado), su ubicación actual y la trazabilidad completa de sus traslados entre refugios, mediante la tabla UBICACION_ANIMAL (con indicador de ubicación vigente) y el stored procedure SP_RegistrarTrasladoAnimal.
+65: [normal] Administrar los hogares de tránsito, registrando cada período de acogida externa desde su inicio hasta su finalización o cancelación, a través de la tabla TRANSITO.
+66: [normal] Llevar el historial médico básico de cada animal (diagnósticos, vacunación y medicación) durante su estadía en el refugio, mediante la tabla HISTORIAL_MEDICO y la función FN_DiasHastaVencimientoVacuna para el seguimiento de vencimientos de vacunas.
+67: [normal] Gestionar el proceso de adopción de punta a punta a través de ADOPCION y ETAPA_ADOPCION (solicitud, en proceso, aprobada, rechazada, concretada), mediante el stored procedure SP_RegistrarEtapaAdopcion, habilitando reportes de impacto a través de la vista VW_HistorialAdopciones.
+68: [normal] Implementar tres stored procedures orientados a los procesos de negocio centrales del sistema:
+69: [normal] Alta de un animal con su ubicación inicial (SP_AltaAnimalConUbicacion).
+70: [normal] Registro de avance en el proceso de adopción (SP_RegistrarEtapaAdopcion).
+71: [normal] Traslado de un animal entre refugios (SP_RegistrarTrasladoAnimal).
+72: [normal] Cada uno con validaciones de negocio y manejo de errores mediante TRY/CATCH y transacciones.
+73: [normal] Implementar tres funciones escalares de apoyo:
+74: [normal] Cálculo de la edad estimada de un animal en meses (FN_EdadEstimadaMeses).
+75: [normal] Verificación de disponibilidad de un animal para adopción (FN_AnimalDisponibleParaAdopcion).
+76: [normal] Cálculo de días restantes hasta el vencimiento de una vacuna (FN_DiasHastaVencimientoVacuna).
+77: [normal] Implementar triggers que actualicen automáticamente el estado del animal al completarse o rechazarse una adopción (TR_ActualizarEstadoAnimal_Adopcion), que impidan iniciar una adopción duplicada o sobre un animal ya adoptado (TR_ControlAdopcionDuplicada), que alerten ante sobrecupo en un refugio (TR_ControlCapacidadRefugio) y que sincronicen el estado del animal al iniciar o finalizar un período de tránsito (TR_ActualizarEstadoAnimal_Transito).
+78: [normal] Desarrollar cuatro vistas de reporte:
+79: [normal] Animales disponibles para adopción (VW_AnimalesDisponibles).
+80: [normal] Historial de adopciones (VW_HistorialAdopciones).
+81: [normal] Ocupación de refugios (VW_OcupacionRefugios).
+82: [normal] Historial médico completo con estado de vacunación calculado (VW_HistorialMedicoCompleto).
+83: [normal] Construir al menos 10 consultas SQL con JOINs, subconsultas y funciones de agregación para soportar reportes analíticos sobre ocupación, adopciones, traslados y atención médica.
+84: [normal] Garantizar la integridad y consistencia de los datos mediante claves primarias, claves foráneas y restricciones CHECK adecuadas en cada tabla del modelo.
+85: [Heading 1] Requisitos del Sistema
+86: [Heading 2] Requisitos Funcionales
+87: [normal] Animales y ubicación
+88: [normal] RF1: El sistema debe permitir registrar un animal con especie, raza, nombre, sexo, fecha de nacimiento estimada y estado de castración.
+89: [normal] RF2: El sistema debe permitir registrar el alta de un animal junto con su ubicación inicial en un refugio en una sola operación.
+90: [normal] RF3: El sistema debe permitir registrar el traslado de un animal entre refugios, cerrando su ubicación anterior y abriendo la nueva.
+91: [normal] RF4: El sistema debe bloquear automáticamente el ingreso de un animal a un refugio que haya alcanzado su capacidad máxima.
+92: [normal] Hogares de tránsito
+93: [normal] RF5: El sistema debe permitir registrar hogares de tránsito y los períodos de tránsito de un animal, indicando fecha de inicio, fin estimado y fin real.
+94: [normal] RF6: El sistema debe actualizar automáticamente el estado del animal a "En tránsito" o "En refugio" según el estado de su período de tránsito.
+97: [normal] Historial médico
+98: [normal] RF7: El sistema debe permitir registrar el historial médico de un animal, incluyendo diagnóstico, medicamento, veterinaria interviniente, tipo de vacuna y fecha de vencimiento.
+99: [normal] RF8: El sistema debe calcular los días restantes o vencidos hasta el vencimiento de una vacuna específica de un animal.
+100: [normal] RF9: El sistema debe calcular la edad estimada en meses de un animal a partir de su fecha de nacimiento estimada.
+101: [normal] Adopciones
+102: [normal] RF10: El sistema debe permitir registrar adoptantes y sus solicitudes de adopción.
+103: [normal] RF11: El sistema debe impedir el registro de una nueva adopción si el animal ya figura como adoptado o ya tiene un proceso de adopción activo.
+104: [normal] RF12: El sistema debe permitir verificar si un animal está disponible para iniciar un proceso de adopción.
+105: [normal] RF13: El sistema debe permitir registrar una nueva etapa dentro de un proceso de adopción y sincronizar el estado general de la adopción.
+106: [normal] RF14: El sistema debe actualizar automáticamente el estado del animal a "Adoptado" o "En refugio" según el resultado de la etapa de adopción registrada.
+107: [normal] Reportes
+108: [normal] RF15: El sistema debe proveer vistas de animales disponibles para adopción, historial de adopciones, ocupación de refugios e historial médico completo.
+109: [normal] RF16: El sistema debe permitir generar reportes analíticos mediante consultas con JOINs, subconsultas y funciones de agregación.
+111: [Heading 2] Requisitos No Funcionales
+112: [normal] RNF1: Las operaciones de alta de animal, registro de traslado y registro de etapa de adopción deben ejecutarse dentro de transacciones atómicas, revirtiendo todos los cambios si ocurre un error durante el proceso.
+113: [normal] RNF2: El sistema debe garantizar la integridad referencial y de dominio de los datos mediante claves primarias, claves foráneas y restricciones de validación (estados permitidos, fechas coherentes, capacidades positivas, unicidad de documentos de identidad).
+114: [normal] RNF3: El historial médico de un animal debe persistir de forma independiente a sus traslados entre refugios, evitando la pérdida de información al cambiar de sede.
+115: [Heading 1] Diseño de la Base de Datos
+116: [Heading 2] Modelo Conceptual
+117: [normal] Inserte el Diagrama Entidad-Relación (DER) y descripciones.
+119: [normal] PatitasUnidas_DER.drawio.png
+123: [Heading 2] Modelo Lógico
+124: [normal] Detalles de tablas, atributos, claves primarias y foráneas.
+127: [normal] PatitasUnidasModeloLogico.drawio.png
+140: [Heading 2] Modelo Físico
+141: [normal] Esquema SQL (tablas con sus restricciones).
+143: [normal] PatitasUnidasModeloLogico.drawio.png
+156: [Heading 2] Diccionario de Datos
+157: [normal] Descripción de cada tabla y campo (tipo, tamaño, restricciones).
+158: [normal] TABLA: DIRECCIÓN
+169: [normal] TABLA: CODIGO POSTAL
+172: [normal] TABLA: ANIMAL
+175: [normal] TABLA: REFUGIO
+178: [normal] TABLA: ADOPTANTE
+183: [normal] TABLA: HOGAR TRANSITO
+186: [normal] TABLA: HISTORIAL MÉDICO
+190: [normal] TABLA: UBICACIÓN ANIMAL
+193: [normal] TABLA: TRÁNSITO
+208: [normal] TABLA: ADOPCION
+221: [normal] TABLA: ETAPA ADOPCION
+227: [Heading 2] Dependencias Funcionales
+228: [normal] Identifique y justifique claves y normalización.
+230: [normal] A modo de ejemplo:
+233: [Heading 1] Implementación y Scripts SQL
+234: [Heading 2] Inserción de Datos
+236: [normal] Tabla: Codigo_Postal
+238: [normal] Tabla: Dirección
+241: [normal] Tabla: Animal
+245: [normal] Tabla: Refugio
+249: [normal] Tabla: Adoptante
+251: [normal] Tabla: Hogar de transito
+254: [normal] Tabla: Historial médico
+258: [normal] Tabla: Ubicación animal
+261: [normal] Tabla: Tránsito
+263: [normal] Tabla: Adopción
+265: [normal] Tabla: Etapa de adopción
+268: [Heading 2] Consultas SQL
+269: [normal] Realizamos las siguientes consultas, de acuerdo a la necesidad del negocio de refugio:
+270: [normal] Cantidad de animales por refugio
+275: [normal] Ocupación porcentual por refugio
+278: [normal] Top 5 refugios con mayor cantidad de animales
+281: [normal] Animales en transito activo
+285: [normal] Adopciones concretadas por mes
+288: [normal] Etapas de adopciones pendientes
+292: [normal] Vacunas próximas a vencer
+295: [normal] Historial médico promedio por especie
+300: [normal] Historial de traslados entre refugios
+304: [normal] Animales disponibles para adopción
+306: [Heading 2] 6.3. Triggers y Vistas
+307: [Heading 3] 6.3.1. Triggers
+308: [Heading 4] Tablas virtuales "inserted I" y "deleted D":
+309: [normal] Son tablas temporales automáticas creadas por el motor de la base de datos. Solo existen en la memoria del servidor mientras se ejecuta un trigger.
+310: [normal] inserted I: Almacena los datos nuevos (los que entran con INSERT o los valores modificados tras un UPDATE). Tiene la foto de cómo quedó el registro.
+311: [normal] deleted D: Almacena los datos viejos (los que se borran con DELETE o los valores que existían antes de ser modificados por un UPDATE). Tiene la foto de cómo estaba el registro antes del cambio.
+312: [Heading 4] 6.3.1.1: TR_ActualizarEstadoAnimal_Adopcion
+313: [normal] Tabla:   ETAPA_ADOPCION  (AFTER INSERT, UPDATE)
+314: [normal] Acción:  Cuando se inserta o actualiza una etapa de adopcion, el trigger se activa y:
+315: [normal] El sistema guarda esa fila modificada dentro de la tabla virtual' inserted'.
+316: [normal] El código usa 'INNER JOIN inserted I' para cruzar esos nuevos datos con las tablas reales ANIMAL y ADOPCION.
+317: [normal] Al revisar "WHERE I.Estado = 'Concretada'", el trigger comprueba si el nuevo estado que se acaba de guardar es igual a 'Concretada'.
+318: [normal] Si es así, actualiza automáticamente las otras tablas
+319: [normal] Si el estado pasa a 'Rechazada', devuelve el ANIMAL.Estado a 'En refugio'.
+320: [normal] Las pruebas para este trigger funcionan mediante el principio de Caja Negra con Verificación de Estado (Antes/Después). Cada prueba del trigger sigue 3 pasos…
+321: [normal] Fotografía del "ANTES": Hace un SELECT para guardar constancia de los estados iniciales del animal y de la adopción en la pantalla de mensajes.
+322: [normal] La Acción Detonante: Ejecuta un INSERT en la tabla ETAPA_ADOPCION. Esta es la tabla que "dispara" el Trigger.
+323: [normal] Fotografía del "DESPUÉS": Hace exactamente el mismo SELECT del paso 1. Al comparar visualmente ambas tablas en la consola, confirmas si el Trigger hizo su trabajo.
+324: [normal] Las pruebas en detalle:
+325: [normal] Datos de la tabla ADOPCION: (ID_Animal 8 [Rocky], ID_Adopcion 3, "En proceso").
+326: [normal] Detonante: Con la finalidad de concretar la adopción, insertamos una etapa con el estado 'Concretada' para el caso de Rocky.
+327: [normal] La reacción del Trigger:
+328: [normal] El Trigger se activa de forma automática tras el INSERT.
+329: [normal] Almacena temporalmente los datos insertados en la tabla del sistema inserted
+330: [normal] Ejecuta el primer bloque del código: detecta que en inserted I el estado es 'Concretada'.
+331: [normal] Cascada de cambios: Modifica la tabla ANIMAL cambiando a Rocky a estado 'Adoptado' y modifica la tabla ADOPCION a 'Concretada'.
+332: [normal] Datos de la tabla ADOPCION: (ID_Animal 6 [Simba], ID_Adopcion 4, "Solicitada").
+333: [normal] Detonante: Con la finalidad de rechazar la adopción, insertamos una etapa con el estado 'Rechazada' para Simba (ID_Animal = 6).
+334: [normal] La reacción de Trigger:
+335: [normal] El Trigger se activa de nuevo.
+336: [normal] Ignora el bloque de código de "Concretada" (porque el estado en inserted no coincide).
+337: [normal] Entra al segundo bloque de código: detecta que en inserted el estado es 'Rechazada'.
+338: [normal] Cascada de cambios: Modifica la tabla ANIMAL para asegurar que Simba regrese al estado 'En refugio' (disponible para otra familia) y actualiza la tabla ADOPCION a estado 'Rechazada'.
+340: [Heading 4] 6.3.1.2: TR_ControlAdopcionDuplicada
+341: [normal] Tabla:   ADOPCION  (INSTEAD OF INSERT)
+342: [normal] Acción:  SQL Server intercepta el intento de INSERT, frena la operación y mete esos datos "en sala de espera" dentro de la tabla inserted:
+343: [normal] El trigger toma el ID_Animal que el usuario está intentando adoptar (que vive temporalmente en inserted I).
+344: [normal] Verifica que el animal (en ANIMAL) NO tenga ya una adopción activa (estado "Solicitada", "En proceso" o "Aprobada").
+345: [normal] Bloquea si el animal ya figura como Adoptado (en ANIMAL).
+346: [normal] Solo permite una nueva adopción si se pasaron las validaciones anteriores
+347: [normal] Las pruebas para este trigger funcionan bajo el enfoque de Pruebas de Negación y Control de Excepciones. Es un trigger de tipo INSTEAD OF INSERT (reemplaza la acción de insertar). El trigger se convierte en un “guardián”: si algo está mal, frena la operación con un error; si todo está bien, él mismo hace el INSERT.  Cada prueba del trigger utiliza un mecanismo de captura (TRY...CATCH)
+348: [normal] BEGIN TRY: Es el laboratorio de pruebas. Aquí va la acción “peligrosa” (el INSERT que debería fallar). Si la base de datos no arroja ningún error, el código sigue de largo y ejecuta el mensaje que dice 'ERROR: el trigger NO bloqueó...'.
+349: [normal] BEGIN CATCH: Es la red de seguridad. Si el trigger detecta el problema y lanza un RAISERROR, SQL Server interrumpe el TRY de inmediato y salta al CATCH. Ahí adentro imprime 'OK', porque el error era justamente lo que se esperaba.
+350: [normal] Las pruebas en detalle:
+351: [normal] Esta prueba busca forzar el segundo bloque IF del trigger.
+352: [normal] La Acción: Se intenta insertar una solicitud para Mora (ID_Animal = 7), quien ya fue adoptada.
+353: [normal] La reacción del Trigger: El trigger frena el INSERT real y revisa la tabla inserted I. Encuentra que el animal con ID 7 tiene estado 'Adoptado' en la tabla ANIMAL.
+354: [normal] El desenlace: El trigger ejecuta su segundo RAISERROR. SQL Server cancela la operación, el código salta al bloque BEGIN CATCH e imprime en la consola que la prueba fue un éxito (OK — Trigger bloqueó correctamente...)
+355: [normal] Esta prueba busca forzar el primer bloque IF del trigger.
+356: [normal] La Acción: Intenta crear una adopción para Coco (ID_Animal = 10).
+357: [normal] La reacción del Trigger: El trigger frena la operación y busca en la tabla ADOPCION si Coco ya tiene algún registro previo en estados críticos ('Solicitada', 'En proceso', 'Aprobada'). Como Coco ya tiene un proceso 'En proceso', el trigger encuentra una coincidencia.
+358: [normal] El desenlace: Se dispara el primer RAISERROR. El INSERT queda totalmente anulado, el flujo salta al BEGIN CATCH y la consola vuelve a marcar un OK confirmando que el trigger defendió el sistema de un registro duplicado.
+359: [normal] Esta prueba evalúa el escenario donde el trigger no debe bloquear, sino dejar pasar la información.
+360: [normal] La Validación Previa: Llama a una función (FN_AnimalDisponibleParaAdopcion) para verificar que Nina (ID 4) está libre (su proceso anterior fue 'Rechazada').
+361: [normal] La Acción: Si está libre (devuelve 1), se intenta el INSERT.
+362: [normal] La reacción del Trigger: El trigger analiza a Nina. Como no está adoptada ni tiene procesos activos, supera ambos bloques IF sin activar ningún RAISERROR.
+363: [normal] El desenlace: El trigger llega a la última línea de su código y ejecuta el INSERT real en la tabla ADOPCION. El script de prueba continúa en el bloque TRY, imprime que todo se creó correctamente y ejecuta un DELETE de inmediato para limpiar la base de datos y no dejar basura de prueba.
+364: [Heading 4] 6.3.1.3: TR_ControlCapacidadRefugio
+365: [normal] Tabla:   UBICACION_ANIMAL  (AFTER INSERT)
+366: [normal] Acción: inserted es un filtro de rendimiento y un puente para auditar si el nuevo ingreso rompió las reglas del negocio.
+367: [normal] Solo cuenta registros con Es_Actual = 1 (que significa que el animal se está mudando a ese refugio hoy). Si Es_Actual = 0, el trigger ve que inserted no tiene filas con 1 y se apaga inmediatamente sin perder tiempo procesando el resto del código
+368: [normal] Al registrarse una nueva ubicación actual de un animal en un refugio, el trigger verifica que la cantidad de animales actualmente alojados no supere la capacidad máxima.
+369: [normal] Las pruebas para este trigger funcionan bajo una estrategia de Manipulación Controlada del Entorno de Prueba. En lugar de buscar un refugio lleno en la base de datos real (lo cual puede variar según el día), el script modifica temporalmente la capacidad del refugio en la prueba para forzar el escenario que necesita.
+370: [normal] Este es un trigger de tipo AFTER INSERT. Significa que el INSERT sí llega a guardarse en la tabla real por un milisegundo, pero el trigger inmediatamente cuenta el total y, si supera el límite, ejecuta un ROLLBACK TRANSACTION para deshacer la operación por completo.
+371: [normal] Antes de ejecutar las pruebas, el script ejecuta un SELECT agrupado (COUNT() y GROUP BY). Esto sirve para mostrar en la consola de mensajes una tabla clara con:
+372: [normal] El nombre de cada refugio.
+373: [normal] Su capacidad máxima.
+374: [normal] Cuántos animales tiene hoy (Ocupacion_Actual).
+375: [normal] Cuántos lugares le quedan libres.
+376: [normal] Las pruebas en detalle:
+377: [normal] Esta prueba busca obligar al trigger a ejecutar el ROLLBACK TRANSACTION.
+378: [normal] Crea un animal de prueba: Inserta un animal temporal ('TestCapacidad') y guarda su ID con SCOPE_IDENTITY().
+379: [normal] Fuerza el Refugio Lleno (El Truco):
+380: [normal] Cuenta cuántos animales tiene actualmente el Refugio 1 (supongamos que tiene 1 animal).
+381: [normal] Hace un UPDATE en la tabla REFUGIO y cambia su Capacidad para que sea exactamente igual a su ocupación actual (Capacidad = 1). Ahora el Refugio 1 está artificialmente lleno al 100%.
+382: [normal] La Acción Detonante: Intenta meter al nuevo animal de prueba en el Refugio 1 (Es_Actual = 1).
+383: [normal] La reacción del Trigger:
+384: [normal] El trigger se activa después del insert.
+385: [normal] Ejecuta la subconsulta SELECT COUNT(*) para el Refugio 1. Como metimos un animal nuevo, la ocupación subió a 2.
+386: [normal] Compara: Ocupacion (2) > Capacidad (1). Como es verdadero, el trigger lanza el RAISERROR y ejecuta el ROLLBACK TRANSACTION.
+387: [normal] El Desenlace: El ROLLBACK cancela el insert. SQL Server salta al bloque BEGIN CATCH, imprimiendo el OK de la prueba. Finalmente, el script restaura la capacidad original del Refugio 1 a 20 y borra el animal temporal.
+388: [normal] Esta prueba evalúa que el trigger no interfiera si hay espacio libre.
+389: [normal] Crea otro animal de prueba: Inserta a 'TestCapacidadOK'.
+390: [normal] La Acción Detonante: Intenta ingresarlo al Refugio 1.
+391: [normal] La reacción del Trigger:
+392: [normal] Como en el paso anterior restauraste la capacidad a 20, el trigger cuenta la ocupación actual (que vuelve a ser baja).
+393: [normal] Compara: Ocupacion (ej. 2) > Capacidad (20). Esta condición no se cumple.
+394: [normal] El trigger ignora el bloque IF y termina su ejecución pacíficamente sin lanzar errores ni hacer rollback.
+395: [normal] El Desenlace: El bloque BEGIN TRY continúa su curso normal. Imprime el mensaje de éxito ('OK — Animal insertado...') e inmediatamente ejecuta un DELETE manual para limpiar las tablas y no dejar registros basura de la prueba.
+396: [Heading 4] 6.3.1.4: TR_ActualizarEstadoAnimal_Transito
+397: [normal] Tabla: TRANSITO  (AFTER INSERT, UPDATE)
+398: [normal] Acción:
+399: [normal] “deleted D” funciona como FILTRO DE ESCAPE: El trigger solo continúa si se hace un INSERT o si se hace un UPDATE donde el Estado_Actual realmente cambió.
+400: [normal] Unimos las tablas virtuales deleted + inserted con LEFT JOIN dentro de un “IF NOT EXISTS”:
+401: [normal] Con INSERT, la tabla deleted viene vacía: Al hacer LEFT JOIN, todos los campos de D se vuelven NULL. Se detecta que es un registro nuevo y se deja pasar la operación para que los datos del animal se actualicen.
+402: [normal] Con UPDATE, la tabla deleted tendrá datos: El trigger compara el estado nuevo (en inserted I) contra el viejo (en deleted D) usando el operador "diferente de" (<>). Si son distintos, el registro pasa el filtro.
+403: [normal] Una vez fuera del bloque IF NOT EXISTS: si la consulta no encuentra ninguna fila que cumpla con ser un INSERT o un UPDATE con cambio de estado (por ejemplo, si solo editaron la dirección del tránsito), el “NOT EXISTS” se vuelve verdadero y ejecuta el RETURN; el servidor NO face modificaciones innecesarias en la tabla ANIMAL.
+404: [normal] “inserted I” le avisa a la tabla ANIMAL que el animal ya no está físicamente en el refugio (o que acaba de regresar).
+405: [normal] Al insertar un nuevo tránsito o actualiza uno existente, el nuevo estado viaja a inserted, el trigger verifica que ese nuevo estado sea 'En tránsito' para ir a la ficha del animal y cambiar su estado a 'En tránsito'.
+406: [normal] Si el nuevo estado que entró a la base de datos es 'Finalizado' o 'Cancelado', devuelve el animal a 'En refugio' (asumiendo que vuelve al refugio coordinador del tránsito).
+407: [normal] La prueba para este trigger funciona bajo el enfoque de Verificación de Ciclo de Vida Completo. Se simula el viaje completo de un animal en un hogar temporal: entra a tránsito, se actualiza su situación y finalmente regresa al refugio.
+408: [normal] Como este es un trigger de tipo AFTER INSERT, UPDATE, reacciona en cadena ante dos eventos distintos del script utilizando las tablas lógicas inserted (datos nuevos) y deleted (datos viejos).
+409: [normal] El script toma la primera foto del animal con ID_Animal = 1 (Fotografía del Antes)
+410: [normal] 1. El Ingreso al Hogar (El INSERT)
+411: [normal] La Acción: El script inserta un registro en la tabla TRANSITO con el estado 'En tránsito'.
+412: [normal] La reacción del Trigger (El filtro de escape):
+413: [normal] Al ser un INSERT, la tabla deleted está completamente vacía.
+414: [normal] La condición D.ID_Transito IS NULL se cumple (da verdadero). El trigger supera el filtro de escape y no se apaga.
+415: [normal] La Cascada de Cambios:
+416: [normal] El trigger avanza al Caso 1. Detecta que en inserted el estado es 'En tránsito'.
+417: [normal] Modifica automáticamente la tabla ANIMAL para cambiar su estado a 'En tránsito'.
+418: [normal] La Verificación: El segundo SELECT (DESPUES INSERT) muestra en la consola que el trigger funcionó y el animal ya no figura en el refugio.
+420: [normal] 2. El Retorno al Refugio (El UPDATE)
+421: [normal] Antes de avanzar, el script recupera el ID de la prueba usando MAX(ID_Transito) para saber exactamente qué registro debe modificar.
+422: [normal] La Acción: El script ejecuta un UPDATE sobre ese registro, cambiando su estado a 'Finalizado'.
+423: [normal] La reacción del Trigger (El filtro de escape):
+424: [normal] Al ser un UPDATE, la tabla deleted D sí tiene datos (guarda el estado viejo: 'En tránsito'). La tabla inserted I guarda el estado nuevo ('Finalizado').
+425: [normal] El trigger compara: I.Estado_Actual <> D.Estado_Actual ('Finalizado' es diferente de 'En tránsito'). La condición se cumple, por lo que supera el filtro y continúa.
+426: [normal] La Cascada de Cambios:
+427: [normal] El trigger ignora el Caso 1 (porque el estado nuevo ya no es 'En tránsito').
+428: [normal] Entra al Caso 2. Detecta que el estado actual en inserted está dentro de la lista ('Finalizado', 'Cancelado').
+429: [normal] Modifica la tabla ANIMAL devolviendo al animal al estado 'En refugio'.
+430: [normal] La Verificación: El tercer SELECT (DESPUES UPDATE) confirma en pantalla que el animal cerró su ciclo y vuelve a estar disponible en el refugio.
+431: [normal] 3. La Limpieza del Sistema
+432: [normal] Para que la base de datos no se llene de registros basura y podamos volver a correr la prueba mañana de forma idéntica, el script ejecuta un DELETE FROM TRANSITO.
+433: [normal] Nota técnica: Cuando borramos el tránsito con ese DELETE, el trigger se activa pero se apaga inmediatamente porque solo está programado para AFTER INSERT, UPDATE (ignora los deletes). El animal queda limpio y listo en estado 'En refugio' para la próxima corrida.
+434: [Heading 3] 6.3.2. Vistas
+435: [Heading 4] 6.3.2.1: VW_AnimalesDisponibles
+436: [normal] Muestra todos los animales disponibles para adopción: estado 'En refugio', sin adopción activa. Incluye refugio actual, especie, raza y datos básicos.
+437: [normal] Prueba: Esta vista actúa como el catálogo de "Disponibilidad Inmediata". Para aparecer aquí, un animal debe cumplir tres condiciones estrictas en su código (WHERE y NOT EXISTS):
+438: [normal] Estar físicamente en el refugio (UA.Es_Actual = 1).
+439: [normal] Tener el estado 'En refugio'.
+440: [normal] No tener ningún proceso de adopción abierto (Solicitada, En proceso, Aprobada).
+441: [normal] Las tres consultas de prueba evalúan la vista desde diferentes ángulos del negocio:
+442: [normal] Consulta 1 (SELECT *): Verifica el filtro de exclusión. Comprueba que solo aparezca Nina (ID 4), mientras esconde automáticamente a los animales en tránsito (Toby, Kira), adoptados (Mora, Max) o con trámites trancados (Luna, Simba, etc.). Además, calcula en tiempo real cuántos días lleva esperando cada animal usando Dias_En_Sistema (DATEDIFF).
+443: [normal] Consulta 2 (WHERE Especie = 'Perro'): Demuestra la capacidad de filtrado secundario. Prueba que la vista se comporta exactamente como una tabla normal, permitiendo buscar únicamente caninos sobre un conjunto ya filtrado.
+444: [normal] Consulta 3 (GROUP BY Refugio_Actual): Evalúa el potencial de reportería. Agrupa los animales disponibles por cada refugio y utiliza la función STRING_AGG para concatenar y listar los nombres de los animales disponibles en una sola celda (ej: "Patitas Norte | 2 | Nina, Pepe")
+445: [Heading 4] 6.3.2.2: VW_HistorialAdopciones
+446: [normal] Muestra el historial completo de adopciones con datos del animal, adoptante, estado actual y etapas recorridas.
+447: [normal] Prueba: Esta vista es un Consolidador Complejo. Utiliza INNER JOINs para unificar tres tablas distintas (Adopción, Animal y Adoptante) y un LEFT JOIN hacia ETAPA_ADOPCION. El LEFT JOIN con COUNT y MAX permite saber cuántas etapas atravesó la adopción y cuándo fue el último movimiento, incluso si el proceso se canceló rápido.
+448: [normal] Las cinco consultas de prueba simulan los reportes que pediría la gerencia del refugio:
+449: [normal] Consulta 1 (SELECT *): Muestra la sábana completa de datos unificados. Reemplaza la necesidad de escribir 4 joins manuales cada vez que se quiere revisar el historial.
+450: [normal] Consulta 2 (WHERE Estado_Adopcion = 'Concretada'): Filtra los casos de éxito final. El resultado esperado confirma que Mora y Max aparecen aquí como los animales que efectivamente ya encontraron un hogar.
+451: [normal] Consulta 3 (WHERE Estado_Adopcion IN (...)): Funciona como un monitor de expedientes abiertos. Muestra la lista de adopciones que requieren atención urgente de los operarios porque están "trabadas" en estados intermedios.
+452: [normal] Consulta 4 (GROUP BY Adoptante... HAVING COUNT >= 1): Es una métrica de fidelización de adoptantes. Agrupa por los datos del humano y cuenta cuántos animales ha adoptado en total. El HAVING filtra para ver solo a los clientes recurrentes o activos.
+453: [normal] Consulta 5 (GROUP BY Estado_Adopcion): Es un análisis estadístico de rendimiento. Utiliza funciones agregadas (AVG, MAX, MIN) para calcular cuántos pasos (etapas) toma típicamente cerrar una adopción exitosa versus una rechazada, exponiendo cuellos de botella en el proceso del refugio.
+454: [Heading 4] 6.3.2.3: VW_OcupacionRefugios
+455: [normal] Muestra la ocupación actual de cada refugio: capacidad máxima, animales alojados actualmente y lugares disponibles.
+456: [normal] Prueba: Esta vista consolida la capacidad logística usando un LEFT JOIN hacía la ubicación actual de los animales. Si un refugio está vacío, el LEFT JOIN evita que desaparezca del mapa, mostrando simplemente una ocupación de 0.
+457: [normal] Consulta 1 y 2 (Límites y Filtros): El primer SELECT lista la red completa de 10 refugios para auditar el orden de saturación. El segundo evalúa un filtro de contingencia (> 50%). Que devuelva cero filas es un resultado exitoso, ya que valida que la métrica condicional funciona y no inventa datos falsos.
+458: [normal] Consulta 3 y 4 (Gestión de Cupos y Alertas): La consulta 3 sirve para la asignación de ingresos (dónde quedan lugares). La consulta 4 es un disparador de alertas tempranas; busca cupos en cero (Lugares_Disponibles = 0) e inserta una columna estática de texto ('⚠ CAPACIDAD MAXIMA...'). Al devolver cero filas en este set de datos, certifica que la red opera con holgura.
+459: [normal] Consulta 5 (KPI Global): Esta consulta vuelve a agrupar sobre una vista ya agrupada. Usa funciones SUM para consolidar toda la infraestructura de la organización y calcula la ocupación global de la red en un solo porcentaje con precisión decimal (CAST( ... AS DECIMAL(5,2))).
+460: [Heading 4] 6.3.2.4: VW_HistorialMedicoCompleto
+461: [normal] Muestra el historial médico de todos los animales con su nombre, refugio actual y detalle de cada atención. Incluye indicador de si la atención fue una vacuna.
+462: [normal] Prueba: Esta vista unifica el expediente clínico. Su mayor virtud es una estructura condicional CASE WHEN que calcula dinámicamente el estado sanitario de las vacunas (VENCIDA, PROXIMA A VENCER, VIGENTE) comparando las fechas del sistema contra el GETDATE() actual.
+463: [normal] Consulta 1 y 2 (Log Clínico y Calendario de Vacunación): La primera expone la cronología médica general. La segunda filtra con IS NOT NULL para aislar las vacunas y ordenarlas cronológicamente por vencimiento, permitiendo armar la agenda de vacunación de la semana.
+464: [normal] Consulta 3 (Gobernanza de Riesgos): Busca animales en estado crítico de inmunización e incorpora una función externa (dbo.FN_DiasHastaVencimientoVacuna). Esto demuestra cómo una vista puede nutrir de datos limpios a funciones calculadas para medir plazos exactos de respuesta.
+465: [normal] Consulta 4 (Frecuencia de Atención): Agrupa por el ID del animal para auditar su historial. Cuenta cuántas veces pasó por veterinaria (COUNT(*)) y cuándo fue su último control (MAX), aislando a los animales que demandan más presupuesto médico.
+466: [normal] Consulta 5 (Auditoría de Omisión): Ejecuta una prueba de negación (NOT EXISTS). Cruza la tabla base ANIMAL contra la vista médica para atrapar a cualquier animal (como Coco, ID 10) que haya sido ingresado al sistema pero que falte cargarle su plan sanitario.
+467: [Heading 4] BONUS (Consultas Cruzadas entre Vistas)
+468: [normal] En esta sección se cruzan dos abstracciones distintas como si fuesen tablas físicas de la base de datos:
+469: [normal] Cruce de Catálogo y Sanidad (Disponibles + Médicos): Combina VW_AnimalesDisponibles con VW_HistorialMedicoCompleto. Permite al departamento de adopciones imprimir la "Ficha de Adopción" de un animal libre junto con el estado real de sus vacunas, garantizando que el adoptante reciba un reporte de transparencia total sobre la salud de su nueva mascota.
+470: [normal] Cruce Logístico y Comercial (Ocupación + Disponibles): Cruza VW_OcupacionRefugios con VW_AnimalesDisponibles. Al aplicar un COUNT() sobre los animales filtrados de la segunda vista, genera un tablero de control ejecutivo que muestra: cuántos animales tienen albergados físicamente en total versus cuántos de ellos ya están listos para ser adoptados por cada sede.
+471: [Heading 2] 6.4 Funciones y Procedimientos
+472: [Heading 3] 6.4.1. Funciones
+473: [Heading 4] 6.4.1.1: FN_EdadEstimadaMeses
+474: [normal] Tipo:    Escalar (SCALAR)
+475: [normal] Entrada: @FechaNacimiento DATE  (fecha estimada de nacimiento)
+476: [normal] Retorna: INT — edad en meses desde la fecha dada hasta hoy. Retorna NULL si la fecha es NULL o futura.
+477: [normal] Uso
+478: [normal] Pruebas: Esta función calcula la edad en meses usando DATEDIFF. Su código incluye un filtro de seguridad en el IF que evita errores de desbordamiento de fechas o cálculos incoherentes.
+479: [normal] Prueba A (Fecha Válida): Envía una fecha fija del pasado ('2020-01-01'). Sirve para comprobar la exactitud matemática del motor. SQL Server calculará de manera determinista los meses transcurridos desde esa fecha hasta el día de hoy.
+480: [normal] Prueba B y C (Límites de Error - NULL y Futura): Evalúan el filtro de escape IF @FechaNacimiento IS NULL OR @FechaNacimiento > CAST(GETDATE() AS DATE). La Prueba B inyecta un NULL y la Prueba C inyecta el año 2099. Ambas fuerzan con éxito que la función retorne un NULL limpio en lugar de romper la consulta con un error del sistema.
+481: [normal] Prueba D (Uso Operativo y Clasificación): Demuestra cómo una función escalar puede embeberse dentro de un bloque CASE WHEN para transformar un número crudo (meses) en una categoría comercial e intuitiva ('Cachorro', 'Joven', 'Adulto', 'Senior'). Al ejecutarse en lote sobre toda la tabla ANIMAL, valida que la función soporta la carga de datos sin degradar el rendimiento.
+482: [Heading 4] 6.4.1.2: FN_AnimalDisponibleParaAdopcion
+483: [normal] Tipo:    Escalar (SCALAR)
+484: [normal] Entrada: @ID_Animal INT
+485: [normal] Retorna: BIT — 1 si el animal está disponible para iniciar una adopción, 0 si no lo está.
+486: [normal] Criterios de disponibilidad:
+487: [normal] Estado = 'En refugio'
+488: [normal] No tiene adopciones activas (Solicitada / En proceso / Aprobada)
+489: [normal] Uso
+490: [normal] Pruebas: Esta función actúa como un validador booleano (BIT). Ejecuta un filtro combinado: el animal debe tener el estado exacto de 'En refugio' y pasar un control de negación (NOT EXISTS) sobre procesos de adopción abiertos.
+491: [normal] El script de pruebas recorre el catálogo animal para verificar que la función identifique correctamente cada uno de los motivos de exclusión:
+492: [normal] Prueba A (Exclusión por Estado Final): Evalúa a Mora (ID 7). Como su estado es 'Adoptada', la primera validación IF @Estado = 'En refugio' falla inmediatamente. La función devuelve un 0 esperado (No disponible).
+493: [normal] Prueba B y C (Exclusión por Proceso Bloqueante): Evalúan a Rocky (ID 8) y Coco (ID 10). Aunque ambos animales sí cumplen con estar físicamente en el refugio, la subconsulta NOT EXISTS detecta que tienen solicitudes activas ('En proceso'). El bloque no se ejecuta y la función devuelve 0.
+494: [normal] Prueba D (Exclusión por Ubicación Temporal): Evalúa a Toby (ID 5). Al estar bajo el estado 'En tránsito', no cumple la condición del refugio. Devuelve 0.
+495: [normal] Prueba E (Reporte de Consistencia Global): Aplica la función a toda la base de datos mediante un LEFT JOIN hacia los procesos activos de ADOPCION. Cruza el resultado matemático de la función con la realidad de las tablas. Al arrojar que únicamente Nina (ID 4) devuelve un 1 (Disponible_Para_Adopcion), certifica que la función no tiene falsos positivos y es 100% confiable para el negocio.
+496: [Heading 4] 6.4.1.3: FN_DiasHastaVencimientoVacuna
+497: [normal] Tipo: Escalar (SCALAR)
+498: [normal] Entrada: @ID_Animal INT, @Tipo_Vacuna VARCHAR(100)
+499: [normal] Retorna: INT — días restantes hasta el vencimiento de la vacuna mas reciente de ese tipo para ese animal.
+500: [normal] Valores posibles:lo
+501: [normal] > 0  : días restantes (vacuna vigente)
+502: [normal] 0  : vence hoy
+503: [normal] < 0  : ya venció hace N días
+504: [normal] NULL  : no existe registro de esa vacuna para el animal
+505: [normal] Uso: SELECT dbo.FN_DiasHastaVencimientoVacuna(3, 'Antirrábica')
+506: [normal] Pruebas: Al recibir un animal y un tipo de vacuna, la función ejecuta un filtro inteligente utilizando TOP 1 ... ORDER BY Fecha DESC. Esto asegura que si a un perro se le ha aplicado la vacuna Antirrábica tres veces a lo largo de su vida, el sistema solo tomará la dosis más reciente para calcular el vencimiento, ignorando los registros del pasado.
+507: [normal] PRUEBA A: El Caso Vigente (Número Positivo)
+508: [normal] La Acción: Evalúa la vacuna Antirrábica de Luna (ID_Animal = 1), la cual vence el 15 de julio de 2026.
+509: [normal] El Comportamiento: Como hoy es 26 de junio de 2026, la fecha de vencimiento está en el futuro.
+510: [normal] El Resultado: DATEDIFF resta 2026-07-15 menos 2026-06-26, devolviendo un número positivo (+19 días). Esto le indica al refugio que el animal está cubierto y protegido.
+511: [normal] PRUEBA B: El Caso Vencido (Número Negativo)
+512: [normal] La Acción: Para no alterar los datos reales, el script inserta un registro temporal en HISTORIAL_MEDICO para Nina (ID 4) con una vacuna ficticia expirada en diciembre de 2023. Luego invoca a la función.
+513: [normal] El Comportamiento: Como la fecha de vencimiento es del pasado, la resta aritmética da al revés.
+514: [normal] El Resultado: Devuelve un número negativo. Esto demuestra que la función es matemáticamente consistente y sirve para identificar instantáneamente brechas sanitarias. Al terminar, ejecuta un DELETE para limpiar la base de datos de inmediato.
+515: [normal] PRUEBA C: El Caso Inexistente (Valor NULL)
+516: [normal] La Acción: Invoca a la función buscando una vacuna llamada 'VacunaQueNoExiste'.
+517: [normal] El Comportamiento: La consulta interna no encuentra ninguna fila que coincida en la tabla. La variable @FechaVencimiento se queda vacía, activando el filtro de seguridad IF @FechaVencimiento IS NULL RETURN NULL;.
+518: [normal] El Resultado: Retorna un NULL limpio, impidiendo que la base de datos colapse o devuelva un número cero que distorsione los reportes.
+519: [normal] PRUEBA D: Automatización de Semáforos (Análisis Operativo)
+520: [normal] Esta es la prueba aplica la función de forma masiva sobre todos los animales vacunados y la mete adentro de una estructura condicional CASE WHEN para diseñar un tablero de prioridades clínicas:
+521: [normal] Si el resultado es < 0, lo etiqueta como VENCIDA.
+522: [normal] Si el resultado es <= 30, genera una alerta roja de URGENTE (<=30 días).
+523: [normal] Si el resultado es <= 90, genera una alerta amarilla de PROXIMA (<=90 días).
+524: [normal] En cualquier otro caso, lo clasifica como VIGENTE.
+525: [Heading 3] 6.4.2. Procedimientos
+526: [Heading 4] 6.4.2.1: SP_AltaAnimalConUbicacion
+527: [normal] Acción: Registra un nuevo animal en el sistema y al mismo tiempo crea su primer registro de ubicación en el refugio indicado.
+528: [normal] Verifica que el refugio exista y tenga capacidad.
+529: [normal] Opera como una transacción atómica: si algo falla, revierte todo (ni animal ni ubicación quedan a medias).
+530: [normal] Parametros de entrada: @Nombre, @Especie, @Raza, @Sexo, @Castrado, @FechaNacimiento_Estimada, @ID_Refugio, @Motivo_Ingreso
+531: [normal] Parámetro de salida: @ID_Animal_Nuevo INT — id del animal creado
+532: [normal] Pruebas: Este SP garantiza la atomicidad; o se crea el animal y su ubicación al mismo tiempo, o no se guarda absolutamente nada. Esto se logra mediante el uso de transacciones explícitas (BEGIN TRANSACTION, COMMIT y ROLLBACK).
+533: [normal] PRUEBA A - El Camino Feliz (Alta Exitosa): Esta prueba verifica que el procedimiento ejecute la inserción doble en cascada de manera correcta cuando los parámetros son válidos.
+534: [normal] La Ejecución: Invoca al SP declarando una variable local @NuevoID para recibir el parámetro de salida (OUTPUT). Registra a "Bicho" en el Refugio 2.
+535: [normal] El Proceso Interno:
+536: [normal] El SP verifica que el Refugio 2 exista y tenga cupo libre.
+537: [normal] Inserta la fila en la tabla ANIMAL.
+538: [normal] Captura el ID autogenerado usando SCOPE_IDENTITY() y lo asigna a @ID_Animal_Nuevo. Usa ese ID fresco para insertar el registro de alojamiento en UBICACION_ANIMAL.
+539: [normal] Ejecuta el COMMIT TRANSACTION, guardando ambos cambios de forma permanente.
+540: [normal] La Verificación y Limpieza: Los dos comandos SELECT posteriores confirman en pantalla que el animal nació con estado 'En refugio' y que su ubicación está activa (Es_Actual = 1). Inmediatamente después, el script ejecuta sentencias DELETE ordenadas de forma reversa (primero la tabla hija por integridad referencial y luego la tabla padre) para dejar la base de datos limpia.
+541: [normal] PRUEBA B: Integridad Referencial Preventiva (Refugio Inexistente): Esta prueba evalúa el primer bloque de validación del SP introduciendo un identificador de refugio falso (9999).
+542: [normal] La Ejecución: Se envuelve la llamada del procedimiento en un bloque BEGIN TRY...CATCH de prueba.
+543: [normal] El Proceso Interno:
+544: [normal] El procedimiento inicia la transacción, pero al evaluar el IF NOT EXISTS en la tabla REFUGIO, detecta que el ID 9999 no existe.
+545: [normal] Dispara un error personalizado con RAISERROR.
+546: [normal] Acción de Seguridad: Antes de salir con el RETURN, ejecuta de forma obligatoria un ROLLBACK TRANSACTION. Esto cancela la transacción y libera los bloqueos en el motor de la base de datos.
+547: [normal] La Verificación: El error salta al bloque CATCH de la prueba, imprimiendo en la consola que el error fue controlado con éxito. Para certificar que la transacción no dejó "huérfanos", la prueba corre un SELECT COUNT(*) buscando el nombre 'AnimalFalla'. El resultado esperado es 0, demostrando que el sistema quedó intacto
+548: [normal] PRUEBA C: Control Preventivo de Recursos (Sin Capacidad): Esta prueba evalúa la validación previa dentro del código del SP.
+549: [normal] Fuerza el Entorno Lleno: Cuenta cuántos animales habitan hoy el Refugio 3 y actualiza la tabla REFUGIO reduciendo su capacidad máxima para igualarla exactamente con su ocupación actual. El refugio se llena de manera artificial al 100%.
+550: [normal] La Ejecución: Intenta ingresar a 'AnimalSinLugar' en ese Refugio 3.
+551: [normal] El Proceso Interno:
+552: [normal] El SP calcula la ocupación actual mediante un COUNT(*) en UBICACION_ANIMAL.Compara las variables: @Ocupacion >= @Capacidad (da verdadero).
+553: [normal] Lanza un RAISERROR específico informando que el refugio está lleno y ejecuta el ROLLBACK TRANSACTION.
+554: [normal] El Cierre Seguro: La prueba atrapa la excepción en su bloque CATCH, marca el escenario como superado de forma controlada (OK) y ejecuta un UPDATE final para devolver la capacidad original de 30 lugares al Refugio 3.
+555: [Heading 4] 6.4.2.2: SP_RegistrarEtapaAdopcion
+556: [normal] Acción: Registra una nueva etapa dentro de un proceso de adopción existente y actualiza el Estado_Actual de la tabla ADOPCION en la misma transacción. Valida que la adopción exista y que el nuevo estado sea una transición lógica válida.
+557: [normal] Parámetros:
+558: [normal] @ID_Adopcion   INT
+559: [normal] @ID_Refugio    INT          — refugio que gestiona esta etapa
+560: [normal] @Estado        VARCHAR(25)  — nuevo estado resultante
+561: [normal] @Observaciones VARCHAR(200) = NULL
+562: [normal] Pruebas: El objetivo de este Procedimiento Almacenado (SP_RegistrarEtapaAdopcion) es gestionar el flujo de un expediente de adopción. Para hacerlo correctamente, el procedimiento debe cerrar cronológicamente la etapa anterior e inaugurar la nueva etapa.
+563: [normal] PRUEBA A - Transición Exitosa (El Camino Feliz): Esta prueba evalúa el comportamiento central del procedimiento; mover la adopción de Luna (ID_Adopcion = 8) desde el estado 'Solicitada' hacia 'En proceso'.
+564: [normal] El Mecanismo de Control:
+565: [normal] El SELECT del ANTES registra el estado original del expediente.
+566: [normal] Al ejecutarse el SP, este busca la última etapa abierta de esa adopción (aquella donde Fecha_Fin IS NULL) y le estampa un UPDATE fijando la Fecha_Fin = GETDATE(). Esto cierra el ciclo anterior.
+567: [normal] Acto seguido, introduce un INSERT en ETAPA_ADOPCION con el nuevo estado ('En proceso') y Fecha_Inicio = GETDATE().
+568: [normal] Sincronización en Cadena: Al realizarse este INSERT, se dispara el Trigger que analizamos al inicio (TR_ActualizarEstadoAnimal_Adopcion), el cual actualiza automáticamente el campo Estado_Actual en la tabla maestra ADOPCION.
+569: [normal] La Verificación: El SELECT del DESPUES confirma que Estado_Actual mutó a 'En proceso'. El último SELECT de la prueba muestra el historial completo de la caminata de etapas: verás la fila vieja cerrada con su fecha de fin y la fila nueva abierta (con Fecha_Fin en NULL).
+570: [normal] PRUEBA B - Control de Existencia (Adopción Inexistente): Esta prueba inyecta un identificador de adopción falso (9999) para evaluar las defensas del procedimiento.
+571: [normal] El Proceso Interno: El SP inicia con una validación preventiva (IF NOT EXISTS). Al buscar el registro 9999 en la tabla ADOPCION y no encontrar nada, frena el flujo inmediatamente.
+572: [normal] El Desenlace: Lanza un RAISERROR controlado, el código de la prueba interrumpe su ejecución normal en el bloque TRY y salta al bloque CATCH, imprimiendo el mensaje de error en la consola de manera segura sin romper el script.
+573: [normal] PRUEBA C - Restricción de Dominio (Estado Inválido): Aquí se intenta forzar el ingreso de una etapa con el estado 'Pendiente', el cual no forma parte del catálogo oficial del refugio.
+574: [normal] El Proceso Interno: La tabla ETAPA_ADOPCION cuenta con una restricción de integridad de tipo CHECK CONSTRAINT que solo admite valores específicos (como 'Solicitada', 'En proceso', 'Aprobada', 'Concretada', 'Rechazada').
+575: [normal] El Desenlace: Cuando el procedimiento intenta ejecutar el INSERT con la palabra 'Pendiente', el motor de SQL Server detecta la violación de la restricción y aborta la operación. El bloque TRY...CATCH interno del SP atrapa la falla, hace un rollback para no dejar datos corruptos y el script de prueba lo reporta en la pantalla como un error controlado (OK).
+576: [normal] PRUEBA D - Bloqueo de Expediente Cerrado (Adopción ya Concretada): Esta prueba evalúa que un proceso cerrado bajo llave no pueda reabrirse ni modificarse. Intenta añadir una etapa a la adopción de Mora (ID_Adopcion = 1), la cual ya fue 'Concretada'.
+577: [normal] El Proceso Interno: Dentro del código del SP existe una validación que lee el estado actual del expediente. Si el registro ya se encuentra en un estado terminal ('Concretada' o 'Rechazada'), el sistema entiende que el trámite legal ha concluido.
+578: [normal] El Desenlace: El procedimiento bloquea la operación de forma prematura mediante un RAISERROR. La prueba captura esta excepción en su bloque CATCH y convalida que el guardián del sistema impide con éxito que un usuario altere un expediente histórico cerrado.
+579: [Heading 4] 6.4.2.3: SP_RegistrarTrasladoAnimal
+580: [normal] Acción: Registra el traslado de un animal de su refugio actual a otro refugio.
+581: [normal] Valida que el animal exista y esté en un refugio.
+582: [normal] Valida que el refugio destino tenga capacidad.
+583: [normal] Cierra la ubicación actual (Es_Actual = 0).
+584: [normal] Abre la nueva ubicación en el refugio destino.
+585: [normal] Todo en una sola transacción atómica.
+586: [normal] Parámetros:
+587: [normal] @ID_Animal        INT
+588: [normal] @ID_Refugio_Dest  INT          — refugio de destino
+589: [normal] @Motivo_Traslado  VARCHAR(150)
+590: [normal] Pruebas: El objetivo de este procedimiento es mudar de forma segura a un animal de una sede a otra, cerrando su historial de alojamiento anterior y abriendo uno nuevo.
+591: [normal] PRUEBA A - El Traslado Exitoso y Reversión (Camino Feliz): Esta prueba evalúa el ciclo completo de mudanza para Simba (ID_Animal = 6), quien inicia correctamente en el estado 'En refugio'.
+592: [normal] El Mecanismo de Mudanza:
+593: [normal] El SELECT del ANTES muestra que Simba reside activamente en el Refugio 6.
+594: [normal] Al ejecutar el SP, el sistema localiza su ubicación actual, le estampa una Fecha_Salida = GETDATE() y cambia su bandera a Es_Actual = 0.
+595: [normal] Inmediatamente después, inserta una nueva fila en UBICACION_ANIMAL con el ID_Refugio_Dest = 2 (Huellitas), fijando su Fecha_Ingreso y marcándolo como Es_Actual = 1.
+596: [normal] El SELECT del DESPUES confirma visualmente en la consola la creación del nuevo registro y el cierre del anterior.
+597: [normal] La Reversión: Para no desordenar la base de datos, el script ejecuta un segundo EXEC que devuelve a Simba a su hogar original (Refugio 6). Esto asegura que la base de datos quede idéntica a como empezó.
+598: [normal] PRUEBA B, C y D - Las Validaciones de Seguridad (Casos de Error): Estas tres pruebas están envueltas en bloques BEGIN TRY...CATCH para verificar que los bloqueos preventivos del procedimiento funcionen correctamente:
+599: [normal] PRUEBA B (Animal Inexistente): Inyecta el ID = 9999. El SP ejecuta un IF NOT EXISTS en la tabla ANIMAL, frena la operación y lanza un error. El CATCH lo atrapa e imprime el mensaje controlado.
+600: [normal] PRUEBA C (Animal en Tránsito): Intenta trasladar a Toby (ID 5), quien está en un hogar temporal. El SP valida el estado del animal: si no es estrictamente 'En refugio', la operación se cancela para evitar que un animal se asigne a un refugio físico mientras está bajo el cuidado de una familia sustituta.
+601: [normal] PRUEBA D (Mismo Refugio): Intenta trasladar a Rocky (ID 8) desde el Refugio 9 hacia el mismísimo Refugio 9. El procedimiento calcula la ubicación actual del animal y, al detectar que el destino coincide con el origen, cancela la transacción con un error para evitar registros duplicados redundantes.
+602: [normal] PRUEBA E - Control de Cupo en Destino (Fuerza Entorno): Calcula cuántos animales tiene el Refugio 4 y altera temporalmente su capacidad máxima en la tabla REFUGIO para dejarlo con cero lugares disponibles.
+603: [normal] Intenta mudar a Rocky a ese refugio lleno. El SP lee la falta de cupo, ejecuta un ROLLBACK y el script atrapa la excepción en el CATCH marcando la prueba como exitosa (OK).
+604: [normal] Finalmente, restaura la capacidad original del Refugio 4 a 35 lugares para mantener la cordura del sistema.
+605: [Heading 3] Estado Final del Sistema Post-Pruebas (Consola de Auditoría)
+606: [normal] Al terminar todas las pruebas de la solución, el script ejecuta un bloque de tres consultas analíticas utilizando COUNT(*) y GROUP BY. Esto genera una fotografía de control de calidad para el programador:
+607: [normal] Animales por estado: Muestra cuántos perros/gatos quedaron en total como Adoptados, En refugio o En tránsito. Permite verificar que ningún trigger haya dejado estados incoherentes.
+608: [normal] Ocupación refugios: Lista las sedes con sus animales actuales. Sirve para constatar que los DELETES y reversiones de las pruebas funcionaron y que las ocupaciones físicas regresaron a sus métricas reales.
+609: [normal] Adopciones por estado: Agrupa los contratos de adopción. Permite ver cuántas solicitudes quedaron abiertas, en proceso o concretadas en la base de datos tras correr todo el set de pruebas.
+611: [Heading 1] Interfaz de Usuario (Opcional)
+612: [normal] Inserte mockups o capturas de pantalla si aplica.
+614: [normal] A modo de ejemplo:
+620: [Heading 1] Plan de Desarrollo y Metodología
+621: [normal] El proyecto se desarrolló bajo la metodología SCRUM, con un equipo de 6 integrantes:
+622: [normal] Product Owner — Ing. Franco Emanuel Salazar.
+623: [normal] Agile Coach / Project Manager — Diaz Sabignoso Valentino.
+624: [normal] Arquitecto de Soluciones/Datos y Líder Técnico — Piñeiro Carolina Julieta.
+625: [normal] Analistas Funcionales — Duarte Ruth y Lazarte Lagos Joanna.
+626: [normal] Desarrollador Full Stack — Areiza Ricardo.
+627: [normal] DevOps Engineer — Pulido Agustín.
+628: [normal] El trabajo se organizó en 5 sprints (Sprint 0 a Sprint 4), gestionados mediante un tablero Trello:
+629: [normal] Sprint 0 (1 semana): Asignación de roles SCRUM y definición del proyecto (universo de discurso).
+630: [normal] Sprint 1 (2 semanas): Inicio del diseño físico, elaboración del DER, redacción de historias de usuario y preparación del pitch inicial (slides y guión).
+631: [normal] Sprint 2 (1 semana): Creación y configuración del repositorio, desarrollo del script de base de datos y definición de los stored procedures CRUD.
+632: [normal] Sprint 3 (1 semana): Revisión de calidad y normalización del modelo, desarrollo de vistas, triggers y consultas.
+633: [normal] Sprint 4 (1 semana): Inserción de datos de prueba, documentación del informe final y preparación del pitch final (slides y guión).
+634: [normal] Total: 6 semanas de desarrollo.
+635: [normal] Ceremonias SCRUM aplicadas a lo largo de cada sprint:
+636: [normal] Sprint Planning: Definición y estimación de las historias de usuario a abordar en el sprint.
+637: [normal] Stand-up semanal: Reunión breve para reportar avances, impedimentos y próximos pasos.
+638: [normal] Consultas al Product Owner: En lugar de una ceremonia formal de Sprint Review, se realizaron consultas puntuales al Product Owner (profesor) durante el desarrollo, a fin de validar dudas y orientar las decisiones de diseño.
+639: [normal] Sprint Retrospective: Revisión del proceso de trabajo del equipo para identificar mejoras.
+640: [Heading 1] Optimización y Rendimiento (Opcional)
+641: [normal] Índices, estadísticas y ejemplos de consultas optimizadas.
+643: [normal] A modo de ejemplo:
+644: [normal] Índice en columna isbn para acelerar búsquedas.
+645: [Heading 1] Seguridad y Recuperación (Opcional)
+646: [normal] Roles, permisos y estrategias de backup.
+648: [normal] A modo de ejemplo:
+649: [normal] Roles: Lector y Administrador; backups diarios.
+651: [Heading 1] Pruebas y Validación (Opcional)
+652: [normal] Casos de prueba y resultados.
+654: [normal] A modo de ejemplo:
+655: [normal] Caso de prueba: insertar préstamo con usuario inexistente y verificar error.
+657: [normal] Solo es ejemplo lo que me interesa es que prueben que quisieron insertar un numero en un atributo carácter y no los dejo por ejemplo o que un número debe ser mayor/menor a 10.
+658: [Heading 1] Gestión de Riesgos (Opcional)
+659: [normal] Análisis de riesgos y planes de contingencia.
+661: [normal] A modo de ejemplo:
+662: [normal] Riesgo: dependencia de servidor; mitigación: réplica en servidor secundario.
+664: [Heading 1] Costos y Presupuesto (Opcional)
+665: [normal] Estimación de recursos humanos y hardware.
+667: [normal] A modo de ejemplo:
+668: [normal] Estimación: licencias MS SQL Server Dev: gratuitas; tiempo de desarrollo: 60 horas.
+670: [Heading 1] Conclusiones y Recomendaciones
+671: [normal] Lecciones aprendidas y siguientes pasos.
+673: [normal] A modo de ejemplo:
+674: [normal] La implementación mejoró tiempos de consulta en un 50%; se recomienda extender al módulo de reservas.
+676: [Heading 1] Referencias y Anexos
+677: [normal] Bibliografía, enlaces, diagramas extra y documentos de apoyo.
+679: [normal] A modo de ejemplo:
+680: [normal] Bibliografía:
+681: [normal] SQL Server Documentation,
+682: [normal] https://docs.microsoft.com/sql.
+
+--- TABLES ---
+Table 0: 9 rows
+  row0:  |  |  |  |  |  | 
+  row1: Campo | Tamaño | Tipo de dato | Descripción | NULL | Clave | Restricción
+  row2: Direccion_Id | 2000 | INT | Identificador único de la tabla direcció | NO | PK | -
+Table 1: 10 rows
+  row0: Campo | Tamaño | Tipo de dato | Descripción | NULL | Clave | Restricción
+  row1: Cpa_ID | 10 | INT | Identificador único de la tabla código p | NO | PK | -
+  row2: Nombre_Calle | 100 | VARCHAR | Nombre de la calle a la que aplica el ra | NO | - | -
+Table 2: 10 rows
+  row0: Campo | Tamaño | Tipo de dato | Descripción | NULL | Clave | Restricción
+  row1: ID_Animal | 2000 | INT | Identificador del animal | NO | PK | -
+  row2: Fecha_Ingreso | 10 | DATE | Fecha de ingreso del animal | NO | . | DEFAULT GETDATE()
+Table 3: 8 rows
+  row0: Campo | Tamaño | Tipo de dato | Descripción | NULL | Clave | Restricción
+  row1: ID_Refugio | 50 | INT | Identificador único de la tabla refugio | NO | PK | -
+  row2: Direccion_Id | 50 | INT | Identificador de la dirección asociada a | NO | FK | REFERENCES DIRECCION(Direccion_Id)
+Table 4: 9 rows
+  row0: Campo | Tamaño | Tipo de dato | Descripción | NULL | Clave | Restricción
+  row1: ID_Adoptante | 10000 | INT | Identificador único de la tabla adoptant | NO | PK | -
+  row2: Direccion_Id | 50 | INT | Identificador de la dirección asociada a | NO | FK | REFERENCES DIRECCION(Direccion_Id)
+Table 5: 11 rows
+  row0: Campo | Tamaño | Tipo de dato | Descripción | NULL | Clave | Restricción
+  row1: ID_HogarTransito | 50 | INT | Identificador único de la tabla hogar tr | NO | PK | -
+  row2: Direccion_Id | 50 | INT | Identificador de la dirección asociada a | NO | FK | REFERENCES DIRECCION(Direccion_Id)
+Table 6: 11 rows
+  row0: Campo | Tamaño | Tipo de dato | Descripción | NULL | Clave | Restricción
+  row1: ID_HistorialMedico | 10000 | INT | Identificador único de la tabla historia | NO | PK | -
+  row2: ID_Animal | 10000 | INT | Identificador del animal asociado al his | NO | FK | REFERENCES ANIMAL(ID_Animal)
+Table 7: 8 rows
+  row0: Campo | Tamaño | Tipo de dato | Descripción | NULL | Clave | Restricción
+  row1: ID_UbicacionAnimal | 10000 | INT | Identificador único de la tabla ubicació | NO | PK | -
+  row2: ID_Animal | 10000 | INT | Identificador del animal asociado a la u | NO | FK | REFERENCES ANIMAL(ID_Animal)
+Table 8: 10 rows
+  row0: Campo | Tamaño | Tipo de dato | Descripción | NULL | Clave | Restricción
+  row1: ID_Transito | 10000 | INT | Identificador único de la tabla tránsito | NO | PK | -
+  row2: ID_Animal | 10000 | INT | Identificador del animal en tránsito | NO | FK | REFERENCES ANIMAL(ID_Animal)
+Table 9: 6 rows
+  row0: Campo | Tamaño | Tipo de dato | Descripción | NULL | Clave | Restricción
+  row1: ID_Adopcion | 10000 | INT | Identificador único de la tabla adopción | NO | PK | -
+  row2: ID_Animal | 10000 | INT | Identificador del animal asociado a la a | NO | FK | REFERENCES ANIMAL(ID_Animal)
+Table 10: 8 rows
+  row0: Campo | Tamaño | Tipo de dato | Descripción | NULL | Clave | Restricción
+  row1: ID_EtapaAdopcion | 10000 | INT | Identificador único de la tabla etapa ad | NO | PK | -
+  row2: ID_Adopcion | 10000 | INT | Identificador de la adopción asociada a  | NO | FK | REFERENCES ADOPCION(ID_Adopcion)

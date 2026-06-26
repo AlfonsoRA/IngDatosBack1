@@ -43,6 +43,7 @@ public class EtapaAdopcionService {
         EtapaAdopcion e = new EtapaAdopcion();
         e.setAdopcion(adopcionService.buscar(req.getAdopcionId()));
         e.setRefugio(refugioService.buscar(req.getRefugioId()));
+        e.setEstado(req.getEstado());
         aplicar(e, req);
         return EtapaAdopcionResponse.from(repository.save(e));
     }
@@ -51,6 +52,7 @@ public class EtapaAdopcionService {
         EtapaAdopcion e = buscar(id);
         e.setAdopcion(adopcionService.buscar(req.getAdopcionId()));
         e.setRefugio(refugioService.buscar(req.getRefugioId()));
+        e.setEstado(req.getEstado());
         aplicar(e, req);
         return EtapaAdopcionResponse.from(repository.save(e));
     }

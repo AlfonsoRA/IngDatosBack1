@@ -2,9 +2,12 @@ package com.patitasunidas.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -17,7 +20,11 @@ public class Direccion {
     @Column(name = "id_direccion")
     private Long id;
 
-    @Column(nullable = false, length = 120)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cpa_id", nullable = false)
+    private CodigoPostal codigoPostal;
+
+    @Column(nullable = false, length = 100)
     private String nombre;
 
     @Column(nullable = false)
@@ -34,6 +41,8 @@ public class Direccion {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public CodigoPostal getCodigoPostal() { return codigoPostal; }
+    public void setCodigoPostal(CodigoPostal codigoPostal) { this.codigoPostal = codigoPostal; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
     public Integer getAltura() { return altura; }

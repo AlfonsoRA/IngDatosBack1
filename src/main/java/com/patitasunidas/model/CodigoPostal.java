@@ -2,12 +2,9 @@ package com.patitasunidas.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -22,9 +19,17 @@ public class CodigoPostal {
     @Column(name = "cpa_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "direccion_id", nullable = false)
-    private Direccion direccion;
+    @Column(name = "nombre_calle", nullable = false, length = 100)
+    private String nombreCalle;
+
+    @Column(length = 50)
+    private String localidad;
+
+    @Column(length = 50)
+    private String partido;
+
+    @Column(nullable = false, length = 50)
+    private String provincia = "BUENOS AIRES";
 
     @Column(name = "altura_desde", nullable = false)
     private Integer alturaDesde;
@@ -32,7 +37,7 @@ public class CodigoPostal {
     @Column(name = "altura_hasta", nullable = false)
     private Integer alturaHasta;
 
-    @Column(nullable = false, length = 5)
+    @Column(nullable = false, length = 10)
     private String paridad = "AMBOS";
 
     @JdbcTypeCode(SqlTypes.CHAR)
@@ -41,8 +46,14 @@ public class CodigoPostal {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public Direccion getDireccion() { return direccion; }
-    public void setDireccion(Direccion direccion) { this.direccion = direccion; }
+    public String getNombreCalle() { return nombreCalle; }
+    public void setNombreCalle(String nombreCalle) { this.nombreCalle = nombreCalle; }
+    public String getLocalidad() { return localidad; }
+    public void setLocalidad(String localidad) { this.localidad = localidad; }
+    public String getPartido() { return partido; }
+    public void setPartido(String partido) { this.partido = partido; }
+    public String getProvincia() { return provincia; }
+    public void setProvincia(String provincia) { this.provincia = provincia; }
     public Integer getAlturaDesde() { return alturaDesde; }
     public void setAlturaDesde(Integer alturaDesde) { this.alturaDesde = alturaDesde; }
     public Integer getAlturaHasta() { return alturaHasta; }

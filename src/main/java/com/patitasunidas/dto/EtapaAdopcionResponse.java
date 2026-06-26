@@ -9,6 +9,7 @@ public class EtapaAdopcionResponse {
     private Long adopcionId;
     private Long refugioId;
     private String refugioNombre;
+    private String estado;
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
     private String observaciones;
@@ -19,6 +20,7 @@ public class EtapaAdopcionResponse {
         r.setAdopcionId(e.getAdopcion().getId());
         r.setRefugioId(e.getRefugio().getId());
         r.setRefugioNombre(e.getRefugio().getNombre());
+        r.setEstado(e.getEstado());
         r.setFechaInicio(e.getFechaInicio());
         r.setFechaFin(e.getFechaFin());
         r.setObservaciones(e.getObservaciones());
@@ -33,6 +35,8 @@ public class EtapaAdopcionResponse {
     public void setRefugioId(Long refugioId) { this.refugioId = refugioId; }
     public String getRefugioNombre() { return refugioNombre; }
     public void setRefugioNombre(String refugioNombre) { this.refugioNombre = refugioNombre; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
     public LocalDate getFechaInicio() { return fechaInicio; }
     public void setFechaInicio(LocalDate fechaInicio) { this.fechaInicio = fechaInicio; }
     public LocalDate getFechaFin() { return fechaFin; }

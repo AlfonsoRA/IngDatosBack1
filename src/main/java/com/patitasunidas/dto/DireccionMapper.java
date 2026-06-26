@@ -8,7 +8,7 @@ public final class DireccionMapper {
 
     private DireccionMapper() {}
 
-    public static DireccionDto toDto(Direccion d, CodigoPostalRepository cpRepo) {
+    public static DireccionDto toDto(Direccion d) {
         DireccionDto dto = new DireccionDto();
         dto.setId(d.getId());
         dto.setCalle(d.getNombre());
@@ -16,14 +16,17 @@ public final class DireccionMapper {
         dto.setLocalidad(d.getLocalidad());
         dto.setPartido(d.getPartido());
         dto.setProvincia(d.getProvincia());
-        cpRepo.findFirstByDireccionId(d.getId())
-                .ifPresent(cp -> dto.setCp(cp.getCodigoPostal().trim()));
+        if (d.getCodigoPostal() != null) {
+            dto.setCpaId(d.getCodigoPostal().getId());
+            dto.setCp(d.getCodigoPostal().getCodigoPostal().trim());
+        }
         return dto;
     }
 
-    public static Direccion toEntity(DireccionDto dto) {
+    public static Direccion toEntity(DireccionDto dto, CodigoPostal codigoPostal) {
         Direccion d = new Direccion();
         if (dto.getId() != null) d.setId(dto.getId());
+        d.setCodigoPostal(codigoPostal);
         d.setNombre(dto.getCalle());
         d.setAltura(parseAltura(dto.getNumero()));
         d.setLocalidad(dto.getLocalidad());
@@ -33,16 +36,24 @@ public final class DireccionMapper {
         return d;
     }
 
-    public static void guardarCodigoPostal(Direccion direccion, DireccionDto dto, CodigoPostalRepository cpRepo) {
-        if (dto.getCp() == null || dto.getCp().isBlank()) return;
-        String cp = String.format("%-8s", dto.getCp().trim()).substring(0, 8);
-        CodigoPostal registro = cpRepo.findFirstByDireccionId(direccion.getId()).orElseGet(CodigoPostal::new);
-        registro.setDireccion(direccion);
-        registro.setAlturaDesde(direccion.getAltura());
-        registro.setAlturaHasta(direccion.getAltura());
-        registro.setParidad("AMBOS");
-        registro.setCodigoPostal(cp);
-        cpRepo.save(registro);
+    public static CodigoPostal crearCodigoPostal(DireccionDto dto) {
+        CodigoPostal cp = new CodigoPostal();
+        cp.setNombreCalle(dto.getCalle());
+        cp.setLocalidad(dto.getLocalidad());
+        cp.setPartido(dto.getPartido());
+        cp.setProvincia(dto.getProvincia() != null && !dto.getProvincia().isBlank()
+                ? dto.getProvincia() : "BUENOS AIRES");
+        int altura = parseAltura(dto.getNumero());
+        cp.setAlturaDesde(1);
+        cp.setAlturaHasta(Math.max(altura, 9999));
+        cp.setParidad("AMBOS");
+        cp.setCodigoPostal(formatCp(dto.getCp()));
+        return cp;
+    }
+
+    public static String formatCp(String cp) {
+        if (cp == null || cp.isBlank()) return "0000    ";
+        return String.format("%-8s", cp.trim()).substring(0, 8);
     }
 
     private static int parseAltura(String numero) {

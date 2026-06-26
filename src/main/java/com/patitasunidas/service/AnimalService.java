@@ -86,7 +86,7 @@ public class AnimalService {
         if (!animalRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Animal no encontrado");
         }
-        if (adopcionRepository.findByAnimalId(id).isPresent()) {
+        if (adopcionRepository.existsByAnimalId(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "No se puede eliminar un animal con proceso de adopcion registrado");
         }
