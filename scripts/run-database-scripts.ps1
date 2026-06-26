@@ -1,32 +1,28 @@
-# Ejecuta los scripts SQL del DER en orden (requiere sqlcmd)
+# Ejecuta los scripts SQL V2 en orden (requiere sqlcmd)
 param(
     [string]$Server = "localhost,1433",
-    [string]$Database = "Patitas Unidas",
-    [string]$User = "patitas_app",
+    [string]$User = "sa",
     [string]$Password = "TU-CONTRASEÑA"
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
-$scripts = @(
-    "001_schema_der.sql",
-    "002_sql_login.sql",
-    "003_stored_procedures.sql",
-    "004_triggers.sql",
-    "005_views.sql",
-    "006_consultas.sql"
-)
 
-foreach ($file in $scripts) {
-    $path = Join-Path $root "database\$file"
-    if (-not (Test-Path $path)) {
-        Write-Error "No se encontro: $path"
-    }
-    Write-Host "Ejecutando $file ..."
-    sqlcmd -S $Server -d $Database -U $User -P $Password -C -i $path -b
+function Invoke-SqlFile {
+    param([string]$Path, [string]$Database = $null)
+    $dbArg = if ($Database) { @("-d", $Database) } else { @() }
+    Write-Host "Ejecutando $(Split-Path $Path -Leaf) ..."
+    sqlcmd -S $Server @dbArg -U $User -P $Password -C -i $Path -b
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Fallo al ejecutar $file"
+        throw "Fallo al ejecutar $Path"
     }
 }
 
+Invoke-SqlFile -Path (Join-Path $root "database\001_tablas.sql")
+Invoke-SqlFile -Path (Join-Path $root "database\002_sql_login.sql") -Database "Patitas Unidas"
+Invoke-SqlFile -Path (Join-Path $root "database\003_funciones_sp.sql") -Database "Patitas Unidas"
+Invoke-SqlFile -Path (Join-Path $root "database\004_triggers_vistas.sql") -Database "Patitas Unidas"
+Invoke-SqlFile -Path (Join-Path $root "database\005_inserts.sql") -Database "Patitas Unidas"
+
 Write-Host "Scripts aplicados correctamente."
+Write-Host "Opcional: ejecutar 006_consultas.sql manualmente en SSMS."

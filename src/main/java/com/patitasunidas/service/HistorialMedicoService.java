@@ -75,8 +75,7 @@ public class HistorialMedicoService {
         h.setDiagnostico(req.getDiagnostico());
         h.setTipoIntervencion(req.getTipoIntervencion());
         h.setFecha(req.getFecha());
-        h.setAntirrabicaAnual(Boolean.TRUE.equals(req.getAntirrabicaAnual()));
-        h.setSextupleAnual(Boolean.TRUE.equals(req.getSextupleAnual()));
-        h.setTripleAnual(Boolean.TRUE.equals(req.getTripleAnual()));
+        h.setTipoVacuna(req.getTipoVacuna());
+        h.setFechaVencimiento(req.getFechaVencimiento());
     }
 }

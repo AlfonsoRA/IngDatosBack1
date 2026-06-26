@@ -14,9 +14,8 @@ public class HistorialMedicoResponse {
     private String diagnostico;
     private String tipoIntervencion;
     private LocalDate fecha;
-    private Boolean antirrabicaAnual;
-    private Boolean sextupleAnual;
-    private Boolean tripleAnual;
+    private String tipoVacuna;
+    private LocalDate fechaVencimiento;
 
     public static HistorialMedicoResponse from(HistorialMedico h) {
         HistorialMedicoResponse r = new HistorialMedicoResponse();
@@ -29,9 +28,8 @@ public class HistorialMedicoResponse {
         r.setDiagnostico(h.getDiagnostico());
         r.setTipoIntervencion(h.getTipoIntervencion());
         r.setFecha(h.getFecha());
-        r.setAntirrabicaAnual(h.getAntirrabicaAnual());
-        r.setSextupleAnual(h.getSextupleAnual());
-        r.setTripleAnual(h.getTripleAnual());
+        r.setTipoVacuna(h.getTipoVacuna());
+        r.setFechaVencimiento(h.getFechaVencimiento());
         return r;
     }
 
@@ -53,10 +51,8 @@ public class HistorialMedicoResponse {
     public void setTipoIntervencion(String tipoIntervencion) { this.tipoIntervencion = tipoIntervencion; }
     public LocalDate getFecha() { return fecha; }
     public void setFecha(LocalDate fecha) { this.fecha = fecha; }
-    public Boolean getAntirrabicaAnual() { return antirrabicaAnual; }
-    public void setAntirrabicaAnual(Boolean antirrabicaAnual) { this.antirrabicaAnual = antirrabicaAnual; }
-    public Boolean getSextupleAnual() { return sextupleAnual; }
-    public void setSextupleAnual(Boolean sextupleAnual) { this.sextupleAnual = sextupleAnual; }
-    public Boolean getTripleAnual() { return tripleAnual; }
-    public void setTripleAnual(Boolean tripleAnual) { this.tripleAnual = tripleAnual; }
+    public String getTipoVacuna() { return tipoVacuna; }
+    public void setTipoVacuna(String tipoVacuna) { this.tipoVacuna = tipoVacuna; }
+    public LocalDate getFechaVencimiento() { return fechaVencimiento; }
+    public void setFechaVencimiento(LocalDate fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
 }

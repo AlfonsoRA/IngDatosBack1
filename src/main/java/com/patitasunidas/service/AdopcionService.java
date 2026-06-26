@@ -2,6 +2,7 @@ package com.patitasunidas.service;
 
 import com.patitasunidas.dto.*;
 import com.patitasunidas.model.Adopcion;
+import com.patitasunidas.model.Animal;
 import com.patitasunidas.repository.AdopcionRepository;
 import com.patitasunidas.repository.AnimalRepository;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,8 @@ import java.util.List;
 @Service
 @Transactional
 public class AdopcionService {
+
+    private static final List<String> ESTADOS_ACTIVOS = List.of("Solicitada", "En proceso", "Aprobada");
 
     private final AdopcionRepository repository;
     private final AnimalRepository animalRepository;
@@ -41,13 +44,11 @@ public class AdopcionService {
     }
 
     public AdopcionResponse crear(AdopcionRequest req) {
-        if (repository.findByAnimalId(req.getAnimalId()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "El animal ya tiene un proceso de adopcion registrado");
-        }
+        Animal animal = animalRepository.findById(req.getAnimalId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Animal no encontrado"));
+        validarNuevaAdopcion(animal);
         Adopcion a = new Adopcion();
-        a.setAnimal(animalRepository.findById(req.getAnimalId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Animal no encontrado")));
+        a.setAnimal(animal);
         a.setAdoptante(adoptanteService.buscar(req.getAdoptanteId()));
         a.setFechaSolicitud(req.getFechaSolicitud());
         a.setEstadoActual(req.getEstadoActual());
@@ -75,5 +76,16 @@ public class AdopcionService {
     Adopcion buscar(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Adopcion no encontrada"));
+    }
+
+    private void validarNuevaAdopcion(Animal animal) {
+        if ("Adoptado".equals(animal.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No se puede iniciar una adopcion: el animal ya figura como Adoptado");
+        }
+        if (repository.existsByAnimalIdAndEstadoActualIn(animal.getId(), ESTADOS_ACTIVOS)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "El animal ya tiene un proceso de adopcion activo");
+        }
     }
 }

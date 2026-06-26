@@ -219,6 +219,9 @@ class ReporteController {
     @GetMapping("/adopciones-detalle")
     public List<Map<String, Object>> adopcionesDetalle() { return service.adopcionesDetalle(); }
 
+    @GetMapping("/historial-medico-completo")
+    public List<Map<String, Object>> historialMedicoCompleto() { return service.historialMedicoCompleto(); }
+
     @GetMapping("/transitos-activos")
     public List<Map<String, Object>> transitosActivos() { return service.transitosActivos(); }
 

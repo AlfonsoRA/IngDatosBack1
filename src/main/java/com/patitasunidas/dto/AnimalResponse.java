@@ -6,8 +6,11 @@ import com.patitasunidas.repository.UbicacionAnimalRepository;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
 
 public class AnimalResponse {
+
+    private static final List<String> ESTADOS_ADOPCION_ACTIVA = List.of("Solicitada", "En proceso", "Aprobada");
 
     private Long id;
     private String nombre;
@@ -42,10 +45,13 @@ public class AnimalResponse {
             r.setRefugioId(ua.getRefugio().getId());
             r.setRefugioNombre(ua.getRefugio().getNombre());
         });
-        adopcionRepository.findByAnimalId(a.getId()).ifPresentOrElse(
-                ad -> r.setEstadoDisponibilidad(
-                        "Concretada".equals(ad.getEstadoActual()) ? "ADOPTADO" : "EN_PROCESO"),
-                () -> r.setEstadoDisponibilidad("DISPONIBLE"));
+        if ("Adoptado".equals(a.getEstado())) {
+            r.setEstadoDisponibilidad("ADOPTADO");
+        } else if (adopcionRepository.existsByAnimalIdAndEstadoActualIn(a.getId(), ESTADOS_ADOPCION_ACTIVA)) {
+            r.setEstadoDisponibilidad("EN_PROCESO");
+        } else {
+            r.setEstadoDisponibilidad("DISPONIBLE");
+        }
         return r;
     }
 

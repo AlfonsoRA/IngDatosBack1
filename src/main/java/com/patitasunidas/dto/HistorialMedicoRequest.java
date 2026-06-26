@@ -10,11 +10,10 @@ public class HistorialMedicoRequest {
     private String observacion;
     private String medicamento;
     private String diagnostico;
-    private String tipoIntervencion;
+    @NotBlank private String tipoIntervencion;
     @NotNull private LocalDate fecha;
-    private Boolean antirrabicaAnual;
-    private Boolean sextupleAnual;
-    private Boolean tripleAnual;
+    private String tipoVacuna;
+    private LocalDate fechaVencimiento;
 
     public Long getAnimalId() { return animalId; }
     public void setAnimalId(Long animalId) { this.animalId = animalId; }
@@ -30,10 +29,8 @@ public class HistorialMedicoRequest {
     public void setTipoIntervencion(String tipoIntervencion) { this.tipoIntervencion = tipoIntervencion; }
     public LocalDate getFecha() { return fecha; }
     public void setFecha(LocalDate fecha) { this.fecha = fecha; }
-    public Boolean getAntirrabicaAnual() { return antirrabicaAnual; }
-    public void setAntirrabicaAnual(Boolean b) { this.antirrabicaAnual = b; }
-    public Boolean getSextupleAnual() { return sextupleAnual; }
-    public void setSextupleAnual(Boolean b) { this.sextupleAnual = b; }
-    public Boolean getTripleAnual() { return tripleAnual; }
-    public void setTripleAnual(Boolean b) { this.tripleAnual = b; }
+    public String getTipoVacuna() { return tipoVacuna; }
+    public void setTipoVacuna(String tipoVacuna) { this.tipoVacuna = tipoVacuna; }
+    public LocalDate getFechaVencimiento() { return fechaVencimiento; }
+    public void setFechaVencimiento(LocalDate fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
 }

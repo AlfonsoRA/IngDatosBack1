@@ -13,6 +13,7 @@ public class DireccionDto {
     private String partido;
     private String provincia = "BUENOS AIRES";
     private String cp;
+    private Long cpaId;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -28,4 +29,6 @@ public class DireccionDto {
     public void setProvincia(String provincia) { this.provincia = provincia; }
     public String getCp() { return cp; }
     public void setCp(String cp) { this.cp = cp; }
+    public Long getCpaId() { return cpaId; }
+    public void setCpaId(Long cpaId) { this.cpaId = cpaId; }
 }

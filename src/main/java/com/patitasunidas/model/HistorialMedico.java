@@ -35,14 +35,11 @@ public class HistorialMedico {
     @Column(nullable = false)
     private LocalDate fecha;
 
-    @Column(name = "antirrabica_anual", nullable = false)
-    private Boolean antirrabicaAnual = false;
+    @Column(name = "tipo_vacuna", length = 100)
+    private String tipoVacuna;
 
-    @Column(name = "sextuple_anual", nullable = false)
-    private Boolean sextupleAnual = false;
-
-    @Column(name = "triple_anual", nullable = false)
-    private Boolean tripleAnual = false;
+    @Column(name = "fecha_vencimiento")
+    private LocalDate fechaVencimiento;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -60,10 +57,8 @@ public class HistorialMedico {
     public void setTipoIntervencion(String tipoIntervencion) { this.tipoIntervencion = tipoIntervencion; }
     public LocalDate getFecha() { return fecha; }
     public void setFecha(LocalDate fecha) { this.fecha = fecha; }
-    public Boolean getAntirrabicaAnual() { return antirrabicaAnual; }
-    public void setAntirrabicaAnual(Boolean antirrabicaAnual) { this.antirrabicaAnual = antirrabicaAnual; }
-    public Boolean getSextupleAnual() { return sextupleAnual; }
-    public void setSextupleAnual(Boolean sextupleAnual) { this.sextupleAnual = sextupleAnual; }
-    public Boolean getTripleAnual() { return tripleAnual; }
-    public void setTripleAnual(Boolean tripleAnual) { this.tripleAnual = tripleAnual; }
+    public String getTipoVacuna() { return tipoVacuna; }
+    public void setTipoVacuna(String tipoVacuna) { this.tipoVacuna = tipoVacuna; }
+    public LocalDate getFechaVencimiento() { return fechaVencimiento; }
+    public void setFechaVencimiento(LocalDate fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
 }
